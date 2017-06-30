@@ -3,6 +3,7 @@ const int PIN_XMIT = 3;
 const int PULSE_LONG_DURATION_US = 900;
 const int PULSE_SHORT_DURATION_US = 300;
 const int PULSE_TOLERANCE_US = 150;
+const int TRANSMIT_SYNC_MS = 15;
 const int TRANSMIT_PAUSE_MS = 10;
 const int TRANSMIT_REPETITION = 8;
 const int BUFFER_LENGTH = 512;
@@ -116,9 +117,10 @@ int cycle_to_bit(unsigned long highTime, unsigned long lowTime) {
 
 void sendSignal(String signal) {
   digitalWrite(LED_BUILTIN, HIGH);
+  sendZero(TRANSMIT_SYNC_MS);
   for (int i = 0; i < TRANSMIT_REPETITION; i++) {
     transmitPwm(signal);
-    pause();
+    sendZero(TRANSMIT_PAUSE_MS);
   }
   digitalWrite(LED_BUILTIN, LOW);
 }
@@ -147,7 +149,7 @@ void transmitHigh() {
   delayMicroseconds(PULSE_SHORT_DURATION_US);
 }
 
-void pause() {
+void sendZero(int duration) {
   digitalWrite(PIN_XMIT, LOW);
-  delay(TRANSMIT_PAUSE_MS);
+  delay(duration);
 }
