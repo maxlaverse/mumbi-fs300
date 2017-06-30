@@ -1,7 +1,7 @@
 const int PIN_RECV = 2;
 const int PIN_XMIT = 3;
-const int PULSE_LONG_DURATION_US = 750;
-const int PULSE_SHORT_DURATION_US = 375;
+const int PULSE_LONG_DURATION_US = 900;
+const int PULSE_SHORT_DURATION_US = 300;
 const int PULSE_TOLERANCE_US = 150;
 const int TRANSMIT_PAUSE_MS = 10;
 const int TRANSMIT_REPETITION = 8;
