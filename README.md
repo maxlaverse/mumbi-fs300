@@ -25,11 +25,12 @@ Nano it means that you can only use port 2 or 3 for this program (see [AttachInt
 I also recommend you to use an antenna as it really improves the reception range.
 
 ## Emitting and receiving signals
-The Arduino program is very basic [pwm emitter/receiver](https://en.wikipedia.org/wiki/Pulse-width_modulation) for 1125μs period long pulses. It reads the serial port for strings composed of `0`, `1` and ending with a return line `\n` and emit them 8 times.
+The Arduino program is very basic [pwm emitter/receiver](https://en.wikipedia.org/wiki/Pulse-width_modulation) for 1200μs long pulses. It reads the serial port for strings composed of `0`, `1` and ending with a return line `\n`.
+It then sends a 15μs RF low signal followed by 8 repetition of the data pwm-modulated each separated by a 10μs low signal.
 
-For the reception it uses interrupts and writes every pulse length in a rolling buffer. The Arduino loop try to find valid signals in this buffer and will keep only those matching following conditions:
-* a minimum length of 34bits
-* signal at least received twice
+For the reception it uses interrupts and starts analyzing data when the 15μs sync signal is detected.
+The program only support signals shorter than 40bits and it will consider a signal as valid
+if it was at least detected two times in the same transmission.
 
 Compile and upload [the Arduino program](arduino-pwm/arduino-pwm.ino) on your board.
 Then connect to the Arduino using the usb-to-serial port. You should see 34bits long codes when pressing buttons of your remote control.
@@ -159,7 +160,9 @@ switch:
 
 ## More about the signal
 The m-FS300 switches are controlled using [pwm modulation](https://en.wikipedia.org/wiki/Pulse-width_modulation).
-An `on` or `off` command consists of 8 repetitions of a 34bits signal sent using a cycle of 1135μs.
+An `on` or `off` command consists of:
+* a low sync signal of 15μs
+* 8 repetitions of a 34bits pulse signal sent using a cycle of 1200, separated by 10μs low signal
 
 _Example:_
 
