@@ -17,7 +17,7 @@ void setup() {
   pinMode(PIN_RECV, INPUT_PULLUP);
   pinMode(PIN_XMIT, OUTPUT);
   attachInterrupt(digitalPinToInterrupt(PIN_RECV), rising, RISING);
-  serialInputString.reserve(200);
+  serialInputString.reserve(MAX_SIGNAL_LENGTH * 5);
 }
 
 void serialEvent() {
