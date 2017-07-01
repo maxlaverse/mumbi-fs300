@@ -1,18 +1,18 @@
 This project aims to help automate the control over Mumbi m-FS300 switches.
 
 It provides two software components:
-* an Arduino program controlled over a serial connection and emitting/receiving signals from the switches and remote controls
+* an Arduino program controlled over a serial connection that emits signals to the switches and received the ones from the remote control
 * a Go daemon connected to an MQTT broker that controls the Arduino
 
 ## Hardware
-* an Arduino (tested on an *nano* model)
+* an Arduino (tested on a *nano* model)
 * a 433.92 MHz RF emitter and receiver
 * a Raspberry Pi (works on any computer)
 * an antenna (optional)
 
 ## Cabling
 The Arduino program expects your RF receiver to be connected on the digital port 2,
-and the emitter to the digital port 3. Of course you can modify this by changing the value of the constantes at the top of the code.
+and the emitter to the digital port 3. Of course you can modify this by changing the value of the constants at the top of the code.
 
 ```c
 const int PIN_RECV=2;
@@ -22,15 +22,15 @@ const int PIN_XMIT=3;
 The reception of signal is done using interrupts. For an Arduino
 Nano it means that you can only use port 2 or 3 for this program (see [AttachInterrupt](https://www.arduino.cc/en/Reference/AttachInterrupt)).
 
-I also recommend you to use an antenna as it really improves the reception range.
+It's also recommended to use an antenna as it really improves the reception range.
 
 ## Emitting and receiving signals
-The Arduino program is very basic [pwm emitter/receiver](https://en.wikipedia.org/wiki/Pulse-width_modulation) for 1200μs long pulses. It reads the serial port for strings composed of `0`, `1` and ending with a return line `\n`.
-It then sends a 15μs RF low signal followed by 8 repetition of the data pwm-modulated each separated by a 10μs low signal.
+The Arduino program is a very basic [pwm emitter/receiver](https://en.wikipedia.org/wiki/Pulse-width_modulation) for 1200μs long pulses. It reads the serial port for strings composed of `0`, `1` and ending with a return line `\n`.
+It then sends a 15μs RF low signal followed by 8 repetitions of the data using pwm modulation, each separated by a 10μs low signal.
 
 For the reception it uses interrupts and starts analyzing data when the 15μs sync signal is detected.
 The program only support signals shorter than 40bits and it will consider a signal as valid
-if it was at least detected two times in the same transmission.
+if it was at least detected two times during the same transmission.
 
 Compile and upload [the Arduino program](arduino-pwm/arduino-pwm.ino) on your board.
 Then connect to the Arduino using the usb-to-serial port. You should see 34bits long codes when pressing buttons of your remote control.
@@ -51,7 +51,7 @@ $ echo "1110000110000100000011100001100000" > /dev/ttyUSB0
 ```
 
 ## Configuring udev
-Everytime to plug your Arduino into your Raspberry, it might or might not end up under the same device name. You can configure your Linux system to symlink the USB device to a fixed name. Have a look at this [Arduino guide](http://playground.arduino.cc/Linux/All) to find out how to do so.
+Every time you plug your Arduino into your Raspberry, it might or might not end up with the same device name. You can configure your Linux system to symlink the USB device to a fixed name. Have a look at this [Arduino guide](http://playground.arduino.cc/Linux/All) to find out how to do so.
 
 
 ## Installing the daemon
@@ -109,7 +109,7 @@ ExecStart=/usr/local/bin/mumbid -c /etc/mumbid.json
 [Install]
 WantedBy=multi-user.target`
 ```
-_Note:_ I run the software as root but it doesn't need root privileges at all. Just make sure that the user you use is in the `dialout` group to have access to the serial port.
+_Note:_ This examples runs the software as root but it doesn't need root privileges at all. Just make sure that the user you use is member of the `dialout` group to have access to the serial port.
 
 Make sure your MQTT broker is started. This was tested with `mosquitto` (v1.3.4) but any compatible broker would work.
 
@@ -162,7 +162,7 @@ switch:
 The m-FS300 switches are controlled using [pwm modulation](https://en.wikipedia.org/wiki/Pulse-width_modulation).
 An `on` or `off` command consists of:
 * a low sync signal of 15μs
-* 8 repetitions of a 34bits pulse signal sent using a cycle of 1200, separated by 10μs low signal
+* 8 repetitions of a 34bits pulse signal with a length of 1200μs, separated by 10μs low signal
 
 _Example:_
 
