@@ -7,6 +7,7 @@ const int TRANSMIT_SYNC_US = 15000;
 const int TRANSMIT_PAUSE_US = 10000;
 const int TRANSMIT_REPETITION = 8;
 const int MAX_SIGNAL_LENGTH = 40;
+const int MIN_SIGNAL_LENGTH = 8;
 
 volatile unsigned long  lastFallingTime = 0;
 String serialInputString = "";
@@ -37,43 +38,69 @@ void loop() {
 
 void rising() {
   static unsigned long highTime, lastRisingTime, lowTime;
-  static int signalCharIndex, signalArrayIndex;
-  static char signalArray[TRANSMIT_REPETITION][MAX_SIGNAL_LENGTH];
-  static bool sent;
-  
+  static bool signalArray[TRANSMIT_REPETITION][MAX_SIGNAL_LENGTH], signalRecognized;
+  static int signalArrayIndex, signalLengths[TRANSMIT_REPETITION];
+
+  // Attach to the interrupt to catch the next falling edge
   attachInterrupt(digitalPinToInterrupt(PIN_RECV), falling, FALLING);
   highTime = lastFallingTime - lastRisingTime;
   lastRisingTime = micros();
   lowTime = lastRisingTime - lastFallingTime;
-  
+
+  // Beginning of a transmission
   if (lowTime > TRANSMIT_SYNC_US) {
     signalArrayIndex = 0;
-    signalCharIndex = 0;
-    sent = false;
+    signalLengths[0] = 0;
+    signalRecognized = false;
+
+  // Beginning of a repetition
   } else if (lowTime > TRANSMIT_PAUSE_US) {
-    signalArray[signalArrayIndex][signalCharIndex++ % MAX_SIGNAL_LENGTH] = '0';
-    signalArray[signalArrayIndex][signalCharIndex++ % MAX_SIGNAL_LENGTH] = '\n';
-    if(sent == false ){
-      int found = 0;
+    // The pause also contains the low part of a pulse signal
+    // Analyzing this last pulse
+    if (highTime > PULSE_LONG_DURATION_US + PULSE_TOLERANCE_US) {
+      signalArray[signalArrayIndex][signalLengths[signalArrayIndex]] = true;
+    }else{
+      signalArray[signalArrayIndex][signalLengths[signalArrayIndex]] = false;
+    }
+    signalLengths[signalArrayIndex]++;
+
+    // Analyze the stored signals if we haven't recognized a signal yet
+    if(signalRecognized == false ){
       for (int i = 0; i < signalArrayIndex; i++) {
-        if (strcmp(signalArray[signalArrayIndex], signalArray[i]) == 0) {
-          Serial.println(signalArray[signalArrayIndex]);
-          sent = true;
+        if (signalLengths[signalArrayIndex] == signalLengths[i] &&
+            signalLengths[i] > MIN_SIGNAL_LENGTH &&
+            memcmp(signalArray[signalArrayIndex], signalArray[i], signalLengths[i]) == 0) {
+          String signal = "";
+          signal.reserve(signalLengths[i]);
+          for (int j = 0; j < signalLengths[i]; j++) {
+            signal+=signalArray[i][j]==true ? "1" : "0";
+          }
+          Serial.println(signal);
+          signalRecognized = true;
           break;
         }
       } 
     }
+
+    // Move to the next signal
     signalArrayIndex = (signalArrayIndex + 1) % TRANSMIT_REPETITION;
-    signalCharIndex = 0;
+    signalLengths[signalArrayIndex] = 0;
+
+  // Invalid timing
   } else if (highTime > PULSE_LONG_DURATION_US + PULSE_TOLERANCE_US
       || lowTime > PULSE_LONG_DURATION_US + PULSE_TOLERANCE_US
       || highTime < PULSE_SHORT_DURATION_US - PULSE_TOLERANCE_US
       || lowTime < PULSE_SHORT_DURATION_US - PULSE_TOLERANCE_US) {
-    signalCharIndex = 0;
+    signalLengths[signalArrayIndex] = 0;
+
+  // Received a high pulse
   } else if (highTime > lowTime) {
-    signalArray[signalArrayIndex][signalCharIndex++ % MAX_SIGNAL_LENGTH] = '1';
+    signalArray[signalArrayIndex][signalLengths[signalArrayIndex]] = true;
+    signalLengths[signalArrayIndex] = (signalLengths[signalArrayIndex] + 1) % MAX_SIGNAL_LENGTH;
+  // Received a low pulse
   } else if (highTime < lowTime) {
-    signalArray[signalArrayIndex][signalCharIndex++ % MAX_SIGNAL_LENGTH] = '0';
+    signalArray[signalArrayIndex][signalLengths[signalArrayIndex]] = false;
+    signalLengths[signalArrayIndex] = (signalLengths[signalArrayIndex] + 1) % MAX_SIGNAL_LENGTH;
   }
 }
 
@@ -84,10 +111,10 @@ void falling() {
 
 void sendSignal(String signal) {
   digitalWrite(LED_BUILTIN, HIGH);
-  sendZero(TRANSMIT_SYNC_US);
+  transmitLow(TRANSMIT_SYNC_US);
   for (int i = 0; i < TRANSMIT_REPETITION; i++) {
     transmitPwm(signal);
-    sendZero(TRANSMIT_PAUSE_US);
+    transmitLow(TRANSMIT_PAUSE_US);
   }
   digitalWrite(LED_BUILTIN, LOW);
 }
@@ -95,28 +122,28 @@ void sendSignal(String signal) {
 void transmitPwm(String signal) {
   for (int i = 0; i < signal.length(); i++) {
     if (signal.charAt(i) == '1') {
-      transmitHigh();
+      transmitHighPulse();
     } else if (signal.charAt(i) == '0') {
-      transmitLow();
+      transmitLowPulse();
     }
   }
 }
 
-void transmitLow() {
+void transmitLowPulse() {
   digitalWrite(PIN_XMIT, HIGH);
   delayMicroseconds(PULSE_SHORT_DURATION_US);
   digitalWrite(PIN_XMIT, LOW);
   delayMicroseconds(PULSE_LONG_DURATION_US);
 }
 
-void transmitHigh() {
+void transmitHighPulse() {
   digitalWrite(PIN_XMIT, HIGH);
   delayMicroseconds(PULSE_LONG_DURATION_US);
   digitalWrite(PIN_XMIT, LOW);
   delayMicroseconds(PULSE_SHORT_DURATION_US);
 }
 
-void sendZero(int duration) {
+void transmitLow(int duration) {
   digitalWrite(PIN_XMIT, LOW);
   delayMicroseconds(duration);
 }
