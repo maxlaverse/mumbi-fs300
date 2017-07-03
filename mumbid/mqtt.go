@@ -20,6 +20,7 @@ type MqttHandler struct {
 	client        *client.Client
 	in            chan MqttMessage
 	out           chan MqttMessage
+	err           chan error
 }
 
 func NewMqttHandler(brokerAddress string, in chan MqttMessage) *MqttHandler {
@@ -28,6 +29,7 @@ func NewMqttHandler(brokerAddress string, in chan MqttMessage) *MqttHandler {
 		brokerAddress: brokerAddress,
 		in:            in,
 		out:           make(chan MqttMessage),
+		err:           make(chan error),
 	}
 }
 
@@ -35,11 +37,13 @@ func (h *MqttHandler) Connect() error {
 	h.client = client.New(&client.Options{
 		ErrorHandler: func(err error) {
 			fmt.Printf("The MQTT client has returned an error: %v\n", err)
+			h.err <- err
 		},
 	})
 
 	defer h.client.Terminate()
 
+	fmt.Printf("Connecting to the broker")
 	return h.client.Connect(&client.ConnectOptions{
 		Network:  "tcp",
 		Address:  h.brokerAddress,
@@ -63,7 +67,8 @@ func (h *MqttHandler) Subscribe(topicList []string) error {
 	})
 }
 
-func (h *MqttHandler) Start() {
+func (h *MqttHandler) Run() error {
+	fmt.Println("Mqtt Handler running")
 	for {
 		select {
 		case c := <-h.out:
@@ -75,12 +80,16 @@ func (h *MqttHandler) Start() {
 			})
 			if err != nil {
 				fmt.Printf("An error has happened during the publication: %v\n", err)
+				return err
 			}
-
+		case e := <-h.err:
+			fmt.Println("Exiting MqttHandler loop because of an error")
+			return e
 		case <-h.done:
 			fmt.Println("Exiting MqttHandler loop")
 		}
 	}
+	return nil
 }
 
 func (h *MqttHandler) Stop() error {
