@@ -70,6 +70,7 @@ This is an example of configuration that you could write to `/etc/mumbid.json`.
 {
   "device": "/dev/arduino",
   "broker": "your-broker:1883",
+  "echoState": false,
   "switches":{
     "living_room/_all":{
       "on": "1110000110000100000001000001001100",
@@ -92,6 +93,8 @@ This is an example of configuration that you could write to `/etc/mumbid.json`.
 ```
 
 The `_all` device is a special device. When those `on` or `off` signal are received ,it will  update the internal state of all the  switches (nothing surprising).
+
+When `echoState` is true, `mumbid` will automatically send an MQTT message saying that the state has been changed successfully, regardless if the corresponding RF signal has been received or not.
 
 ### systemd
 You can configure the daemon to start automatically on boot with `systemd`.
