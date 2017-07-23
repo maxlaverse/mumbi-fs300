@@ -6,9 +6,10 @@ import (
 )
 
 type GlobalConfiguration struct {
-	Device   string
-	Broker   string
-	Switches map[string]SwitchConfiguration
+	Device    string
+	Broker    string
+	EchoState bool
+	Switches  map[string]SwitchConfiguration
 }
 
 type SwitchConfiguration struct {
@@ -17,7 +18,9 @@ type SwitchConfiguration struct {
 }
 
 func readConfiguration(filename string) (error, GlobalConfiguration) {
-	var configuration GlobalConfiguration
+	configuration := GlobalConfiguration{
+		EchoState: true,
+	}
 
 	file, err := os.Open(filename)
 	if err != nil {

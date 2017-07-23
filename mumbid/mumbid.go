@@ -130,10 +130,12 @@ func (m *MumbiDaemon) loop() {
 				m.serial.Write([]byte(string(theSwitch.Off) + "\n"))
 			}
 
-			m.mqtt.Send(&MqttMessage{
-				Topic:   strings.TrimSuffix(c.Topic, "/"+SET_COMMAND),
-				Message: c.Message,
-			})
+			if m.configuration.EchoState {
+				m.mqtt.Send(&MqttMessage{
+					Topic:   strings.TrimSuffix(c.Topic, "/"+SET_COMMAND),
+					Message: c.Message,
+				})
+			}
 
 		case c := <-m.serialIn:
 			serialMessage := strings.TrimSpace(string(c))
