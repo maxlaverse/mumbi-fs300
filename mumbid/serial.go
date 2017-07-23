@@ -41,9 +41,10 @@ func (s *SerialHandler) watchSerial() {
 		}
 		if n > 0 {
 			buffer = buffer + string(buf[0:n])
-			if strings.HasSuffix(buffer, "\n") {
-				s.in <- []byte(buffer)
-				buffer = ""
+			for strings.Contains(buffer, ">") {
+				pos := strings.Index(buffer, ">")
+				s.in <- []byte(buffer[0:pos])
+				buffer = strings.TrimPrefix(buffer, buffer[0:pos+1])
 			}
 		}
 	}
@@ -65,6 +66,10 @@ func (s *SerialHandler) Run() error {
 		case c := <-s.out:
 			fmt.Printf("Writing to serial: %v\n", c)
 			_, err2 := s.port.Write(c)
+			if err2 != nil {
+				return err2
+			}
+			err2 = s.port.Flush()
 			if err2 != nil {
 				return err2
 			}
