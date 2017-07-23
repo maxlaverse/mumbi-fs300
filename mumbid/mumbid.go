@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
+	"time"
 )
 
 const TOPIC_PREFIX = "home/"
@@ -41,26 +42,48 @@ func (m *MumbiDaemon) switchNameList() []string {
 
 func (m *MumbiDaemon) Start() error {
 	m.serial = NewSerialHandler(m.configuration.Device, m.serialIn)
-	err := m.serial.Open()
-	if err != nil {
-		return err
-	}
-	go m.serial.Start()
+	go func() {
+		for {
+			err := m.serial.Open()
+			if err != nil {
+				fmt.Printf("Cound not open the serial connection: %v\n", err)
+				time.Sleep(10 * time.Second)
+				continue
+			}
+			err = m.serial.Run()
+			if err == nil {
+				break
+			}
+			fmt.Printf("Serial handler exited: %v\n", err)
+			time.Sleep(10 * time.Second)
+		}
+	}()
 
 	m.mqtt = NewMqttHandler(m.configuration.Broker, m.mqttIn)
-	err = m.mqtt.Connect()
-	if err != nil {
-		return err
-	}
+	go func() {
+		for {
+			err := m.mqtt.Connect()
+			if err != nil {
+				fmt.Printf("Cound not open the connect to the broker: %v\n", err)
+				time.Sleep(10 * time.Second)
+				continue
+			}
 
-	switchKeys := reflect.ValueOf(m.configuration.Switches).MapKeys()
-	topicList := make([]string, len(switchKeys))
-	for i := 0; i < len(switchKeys); i++ {
-		topicList[i] = TOPIC_PREFIX + switchKeys[i].String() + "/" + SET_COMMAND
-	}
+			switchKeys := reflect.ValueOf(m.configuration.Switches).MapKeys()
+			topicList := make([]string, len(switchKeys))
+			for i := 0; i < len(switchKeys); i++ {
+				topicList[i] = TOPIC_PREFIX + switchKeys[i].String() + "/" + SET_COMMAND
+			}
 
-	m.mqtt.Subscribe(topicList)
-	go m.mqtt.Start()
+			m.mqtt.Subscribe(topicList)
+			err = m.mqtt.Run()
+			if err == nil {
+				break
+			}
+			fmt.Printf("Mqtt handler exited: %v\n", err)
+			time.Sleep(10 * time.Second)
+		}
+	}()
 
 	go m.loop()
 	return nil
