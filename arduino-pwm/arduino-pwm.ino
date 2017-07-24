@@ -32,10 +32,23 @@ void loop() {
       message[messageIndex++] = character == '1';
     } else if (transmissionStarted && character == '>' ) {
       sendSignal(message, messageIndex);
+      Serial.print("<OK:");
+      for (int j = 0; j < messageIndex; j++) {
+        Serial.print(message[j] == true ? "1" : "0");
+      }
+      Serial.print(">");
+      Serial.flush();
       messageIndex = 0;
       transmissionStarted = false;
     } else {
-      Serial.println("Invalid transmission: '" + String(character) + "'");
+      Serial.print("<ERR:");
+      Serial.print(transmissionStarted == true ? "0" : "1");
+      Serial.print(":");
+      Serial.print(String(messageIndex));
+      Serial.print(":");
+      Serial.print(String(character));
+      Serial.print(">");
+      Serial.flush();
     }
   }
 
@@ -82,7 +95,8 @@ void rising() {
           for (int j = 0; j < signalLengths[i]; j++) {
             Serial.print(signalArray[i][j] == true ? "1" : "0");
           }
-          Serial.println(">");
+          Serial.print(">");
+          Serial.flush();
         }
         signalOccurences[i]++;
         break;

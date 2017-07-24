@@ -3,12 +3,9 @@ package main
 import (
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/tarm/serial"
 )
-
-const DELAY_BETWEEN_TRANSMISSION_MS = 200
 
 type SerialHandler struct {
 	done   chan struct{}
@@ -16,6 +13,7 @@ type SerialHandler struct {
 	in     chan []byte
 	out    chan []byte
 	err    chan error
+	ack    chan struct{}
 	port   *serial.Port
 }
 
@@ -26,6 +24,7 @@ func NewSerialHandler(device string, in chan []byte) *SerialHandler {
 		in:     in,
 		err:    make(chan error),
 		out:    make(chan []byte),
+		ack:    make(chan struct{}),
 	}
 }
 
@@ -40,11 +39,17 @@ func (s *SerialHandler) watchSerial() {
 			return
 		}
 		if n > 0 {
+			fmt.Printf("Read %d bytes (%s)\n", n, string(buf[0:n]))
 			buffer = buffer + string(buf[0:n])
 			for strings.Contains(buffer, ">") {
-				pos := strings.Index(buffer, ">")
-				s.in <- []byte(buffer[0:pos])
-				buffer = strings.TrimPrefix(buffer, buffer[0:pos+1])
+				pos := strings.Index(buffer, ">") + 1
+				if strings.HasPrefix(buffer[0:pos], "<OK:") || strings.HasPrefix(buffer[0:pos], "<ERR:") {
+					s.ack <- struct{}{}
+					fmt.Printf("Ack: '%s'\n", string(buffer[0:pos]))
+				} else {
+					s.in <- []byte(buffer[0:pos])
+				}
+				buffer = strings.TrimPrefix(buffer, buffer[0:pos])
 			}
 		}
 	}
@@ -69,11 +74,7 @@ func (s *SerialHandler) Run() error {
 			if err2 != nil {
 				return err2
 			}
-			err2 = s.port.Flush()
-			if err2 != nil {
-				return err2
-			}
-			time.Sleep(DELAY_BETWEEN_TRANSMISSION_MS * time.Millisecond)
+			<-s.ack
 		case e := <-s.err:
 			fmt.Println("Exiting MqttHandler loop because of an error")
 			return e
@@ -86,7 +87,8 @@ func (s *SerialHandler) Run() error {
 }
 
 func (s *SerialHandler) Write(message []byte) {
-	s.out <- message
+	fmt.Println("Serial out chan")
+	go func() { s.out <- message }()
 }
 
 func (s *SerialHandler) Stop() {
