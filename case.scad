@@ -1,0 +1,255 @@
+main(
+  case_l = 43,
+  case_w = 33,
+  case_h = 10,
+  case_t = 1.5,
+  
+  usb_l = 7.8,
+  usb_h = 4,
+  usb_d = 1.5,
+  
+  arduino_l = 43,
+  arduino_w = 18,
+  arduino_h = 1,
+  
+  arduino_support_h = 4,
+  arduino_support_inner = 1,
+  arduino_support_outer = 2,
+  arduino_support_plot_l = 6,
+
+  antenna_hole_h = 4,
+  antenna_hole_l = 2,
+  
+  reset_d = 1,
+  reset_offset_board = 25,
+  
+  led_hole_l = 5,
+  led_hole_w = 1,
+  led_offset_board = 32.5,
+  
+  rf_support_h = 8,
+  rf_support_l = 1.5,
+  rf_support_board_t = 1,
+  rf_support_wall_inner = 0.75
+);
+
+module wall_tx(){
+  union(){
+    difference(){
+      cube([rf_support_wall_inner, case_w - 2*rf_support_l + 2*rf_support_wall_inner-0.02, rf_support_h], center=true);
+      translate([0, 0, 2]){
+        cube([rf_support_wall_inner + 0.01, arduino_w + 0.01, rf_support_h - arduino_support_h + 0.01], center=true);
+      }
+    }
+    translate([0, 0, -rf_support_h/2]){
+      cube([rf_support_wall_inner, 2, 2], center=true);
+    }
+    translate([-rf_support_wall_inner, 0, -rf_support_h/2-1.5]){
+      cube([rf_support_wall_inner*2, 4, 1], center=true);
+    }
+  }
+}
+
+module main(){
+  translate([case_l/2 + rf_support_h+4, 0, -case_h/2 - case_t/2]){
+    rotate([0, 90]){
+      wall_tx(
+        case_w = case_w,
+        rf_support_h = rf_support_h,
+        rf_support_l = rf_support_l,
+        arduino_w = arduino_w,
+        arduino_support_h = arduino_support_h,
+        rf_support_wall_inner = rf_support_wall_inner);
+    }
+  }
+  
+  difference(){
+    union(){
+      box(
+        l = case_l,
+        w = case_w,
+        h = case_h,
+        t = case_t
+      );
+      translate([0, 0, -case_h/2 + arduino_support_h/2 + 0.1]){
+        arduino_support(
+          arduino_l = arduino_l,
+          arduino_w = arduino_w,
+          arduino_h = arduino_h,
+          inner = arduino_support_inner,
+          outer = arduino_support_outer,
+          h = arduino_support_h,
+          plot_l = arduino_support_plot_l
+        );
+      }
+      translate([0, 0, -case_h/2]){
+        union(){
+          inner_rx_offset_1 = 3;
+          inner_tx_offset_1 = 8;
+          inner_rx_offset_2 = 19;
+          inner_tx_offset_2 = 29;
+           
+          // Support TX angle
+          translate([-case_l/2 + rf_support_l/2 + inner_rx_offset_1, -case_w/2 + rf_support_l/2, rf_support_h/2]){
+            cube([rf_support_l, rf_support_l, rf_support_h], center=true);
+          }
+
+          // Support TX
+          translate([-case_l/2 - rf_support_l + inner_rx_offset_2, -case_w/2 + rf_support_l/2]){
+            rf_support(
+              h = rf_support_h,
+              l = rf_support_l,
+              t = rf_support_board_t,
+              wall_d = rf_support_wall_inner
+            );
+          }
+          
+          // Mirror support RX for TX
+          translate([-case_l/2 - rf_support_l + inner_rx_offset_2, case_w/2 - rf_support_l/2]){
+            rotate([0, 0, 180]){
+              mirror(){
+                rf_support(
+                  h = rf_support_h,
+                  l = rf_support_l,
+                  t = 0,
+                  wall_d = rf_support_wall_inner,
+                  handle_h = 0
+                );
+              }
+            }
+          }
+          
+          // Support central
+          translate([-case_l/2 + rf_support_l/2, 0, rf_support_h/2]){
+            cube([1, rf_support_l*2, rf_support_h], center=true);
+          }
+          
+          // Support RX angle
+          translate([-case_l/2 + rf_support_l/2 + inner_tx_offset_1, case_w/2 - rf_support_l/2, rf_support_h/2]){
+            cube([rf_support_l, rf_support_l, rf_support_h], center=true);
+          }
+          
+          // Support RX
+          translate([-case_l/2 - rf_support_l + inner_tx_offset_2, case_w/2 - rf_support_l/2]){
+            rotate([0, 0, 180]){
+              mirror(){
+                rf_support(
+                  h = rf_support_h,
+                  l = rf_support_l,
+                  t = rf_support_board_t,
+                  wall_d = rf_support_wall_inner,
+                  handle_h = 1
+                );
+              }
+            }
+          }
+          
+          // Mirror support TX for TX
+          translate([-case_l/2 - rf_support_l + inner_tx_offset_2, -case_w/2 + rf_support_l/2]){
+            rf_support(
+              h = rf_support_h + rf_support_board_t,
+              l = rf_support_l,
+              handle_h = 0,
+              wall_d = rf_support_wall_inner,
+              t = 0
+            );
+          }
+        }
+      }
+    }
+    translate([case_l/2 + usb_d/2, 0, -case_h/2 + usb_h/2]){
+      cube([usb_d + 2*0.01, usb_l, usb_h], center = true);
+    }
+    translate([case_l/2 - reset_offset_board, 0, -case_h/2 - case_t/2]){
+      reset_hole(
+        h = case_t,
+        d = reset_d
+      );
+    }
+    translate([case_l/2 - led_offset_board, 0, -case_h/2 - case_t/2]){
+      led_hole(
+        l = led_hole_l,
+        w = led_hole_w,
+        h = case_t
+      );
+    }
+    translate([-case_l/2 - case_t/2, -case_w/2 + antenna_hole_l/2, rf_support_h - case_h/2 + antenna_hole_h/2]){
+      antenna_hole(
+        h = antenna_hole_h, 
+        l = antenna_hole_l,
+        d = case_t
+      );
+    }
+    translate([-case_l/2 - case_t/2, case_w/2 - antenna_hole_l/2, rf_support_h - case_h/2 + antenna_hole_h/2]){
+     antenna_hole(
+        h = antenna_hole_h, 
+        l = antenna_hole_l,
+        d = case_t
+      );
+    }
+  }
+  //projection(cut=true) rotate([0,90,0]) box_with_support();
+  //box_with_support_and_holes();
+
+  //box_with_support_and_holes();
+  //support();
+  //box_with_arduino_support();case_l
+}
+
+module led_hole(){
+  cube([w, l, h + 2*0.01], center=true);
+}
+
+module reset_hole(){
+  cylinder(h + 2*0.01, 1, 1, center=true);
+}
+
+module antenna_hole(){
+  cube([d + 0.01, l, h], center=true);
+}
+
+module arduino_support(){
+  difference(){
+    cube([arduino_l, arduino_w + 2*(outer - inner), h + arduino_h], center = true);
+    cube([arduino_l + 2*0.01, arduino_w - 2*inner, h + arduino_h + 0.01], center = true);
+    cube([arduino_l - plot_l, arduino_w + 2*(outer - inner) + 0.01, h + arduino_h + 0.01], center = true);
+    translate([0, 0, h/2 + 0.01/2]){
+        cube([arduino_l, arduino_w, arduino_h + 0.01], center = true);
+    }
+  }
+}
+
+module box(){
+  difference(){
+    cube([l + 2 * t,
+          w + 2 * t,
+          h + 2 * t], center = true);
+    
+    // Move to cube to the top to have an opened box
+    translate([0, 0, t/2])
+      cube([l,
+            w,
+            h + t + 0.01], center = true);
+  }
+}
+
+module rf_support(
+    handle_h = 1
+    ){
+
+  translate([0, 0, (h + t + handle_h)/2]){
+    difference(){
+      cube([l*2, l, h + t + handle_h], center=true);
+      translate([-l/2-wall_d/2,0, h/2]){
+        cube([l+0.01, l+0.01, t + handle_h + 0.01], center=true);
+      }
+      translate([-l/2, 0, h/2 + l -handle_h - t]){
+        cube([l+0.01, l+0.01, t+0.01], center=true);
+      }
+      // For wall slide
+      translate([0,l/2-wall_d/2]){
+        cube([wall_d + 0.01, wall_d + 0.01, h + t + handle_h + 0.01], center=true);
+      }
+    }
+  }
+}
