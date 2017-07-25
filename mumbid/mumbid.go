@@ -125,9 +125,9 @@ func (m *MumbiDaemon) loop() {
 			theSwitch := m.configuration.Switches[switchFromTopic(c.Topic)]
 
 			if c.Message == STATE_ON {
-				m.serial.Write([]byte(string(theSwitch.On) + "\n"))
+				m.serial.Write([]byte("<" + string(theSwitch.On) + ">"))
 			} else {
-				m.serial.Write([]byte(string(theSwitch.Off) + "\n"))
+				m.serial.Write([]byte("<" + string(theSwitch.Off) + ">"))
 			}
 
 			if m.configuration.EchoState {
@@ -140,6 +140,8 @@ func (m *MumbiDaemon) loop() {
 		case c := <-m.serialIn:
 			serialMessage := strings.TrimSpace(string(c))
 			fmt.Printf("Received a SERIAL message: %s (%d)\n", serialMessage, len(serialMessage))
+			serialMessage = strings.TrimPrefix(serialMessage, "<")
+			serialMessage = strings.TrimSuffix(serialMessage, ">")
 
 			state, switchList := m.findSwitches(serialMessage)
 			fmt.Printf("Found %d matching switch for state %s\n", len(switchList), state)

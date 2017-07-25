@@ -26,7 +26,7 @@ It's also recommended to use an antenna as it really improves the reception rang
 
 ## Emitting and receiving signals
 The Arduino program is a very basic [pwm emitter/receiver](https://en.wikipedia.org/wiki/Pulse-width_modulation) for 1200μs long pulses. It reads the serial port for strings composed of `0`, `1` and ending with a return line `\n`.
-It then sends a 15μs RF low signal followed by 8 repetitions of the data using pwm modulation, each separated by a 10μs low signal.
+It then sends a 15μs RF low signal followed by 8 repetitions of the data using pwm modulation ending with a 10μs low signal.
 
 For the reception it uses interrupts and starts analyzing data when the 15μs sync signal is detected.
 The program only support signals shorter than 40bits and it will consider a signal as valid
@@ -38,16 +38,16 @@ Then connect to the Arduino using the usb-to-serial port. You should see 34bits 
 On Linux:
 ```
 $ cat < /dev/ttyUSB0
-1110000110000100000011110001100100
-1110000110000100000011100001100000
-1110000110000100000011110001100100
+<1110000110000100000011110001100100>
+<1110000110000100000011100001100000>
+<1110000110000100000011110001100100>
 ```
 
 If you re-emit one of those code ending with a return line, you should see your switches be turned on and off.
 
 ```
-$ echo "1110000110000100000011110001100100" > /dev/ttyUSB0
-$ echo "1110000110000100000011100001100000" > /dev/ttyUSB0
+$ echo -n "<1110000110000100000011110001100100>" > /dev/ttyUSB0
+$ echo -n "<1110000110000100000011100001100000>" > /dev/ttyUSB0
 ```
 
 ## Configuring udev
@@ -165,7 +165,7 @@ switch:
 The m-FS300 switches are controlled using [pwm modulation](https://en.wikipedia.org/wiki/Pulse-width_modulation).
 An `on` or `off` command consists of:
 * a low sync signal of 15μs
-* 8 repetitions of a 34bits pulse signal with a length of 1200μs, separated by 10μs low signal
+* 8 repetitions of a 34bits pulse signal with a length of 1200μs, followed by 10μs low signal
 
 _Example:_
 
