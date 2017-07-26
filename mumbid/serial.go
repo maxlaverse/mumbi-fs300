@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/tarm/serial"
 )
@@ -13,7 +14,7 @@ type SerialHandler struct {
 	in     chan []byte
 	out    chan []byte
 	err    chan error
-	ack    chan struct{}
+	ack    chan string
 	port   *serial.Port
 }
 
@@ -24,7 +25,7 @@ func NewSerialHandler(device string, in chan []byte) *SerialHandler {
 		in:     in,
 		err:    make(chan error),
 		out:    make(chan []byte),
-		ack:    make(chan struct{}),
+		ack:    make(chan string),
 	}
 }
 
@@ -44,8 +45,7 @@ func (s *SerialHandler) watchSerial() {
 			for strings.Contains(buffer, ">") {
 				pos := strings.Index(buffer, ">") + 1
 				if strings.HasPrefix(buffer[0:pos], "<OK:") || strings.HasPrefix(buffer[0:pos], "<ERR:") {
-					s.ack <- struct{}{}
-					fmt.Printf("Ack: '%s'\n", string(buffer[0:pos]))
+					s.ack <- buffer[0:pos]
 				} else {
 					s.in <- []byte(buffer[0:pos])
 				}
@@ -70,11 +70,22 @@ func (s *SerialHandler) Run() error {
 		select {
 		case c := <-s.out:
 			fmt.Printf("Writing to serial: %v\n", c)
-			_, err2 := s.port.Write(c)
-			if err2 != nil {
-				return err2
+			_, err := s.port.Write(c)
+			if err != nil {
+				return err
 			}
-			<-s.ack
+
+			select {
+			case ack := <-s.ack:
+				fmt.Printf("Ack: '%s'\n", ack)
+			case <-time.After(time.Second * 5):
+				fmt.Println("Arduino didn't sent ack in time. Resetting")
+				_, err = s.port.Write([]byte(">"))
+				if err != nil {
+					return err
+				}
+			}
+
 		case e := <-s.err:
 			fmt.Println("Exiting MqttHandler loop because of an error")
 			return e
