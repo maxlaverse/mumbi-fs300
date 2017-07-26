@@ -44,13 +44,14 @@ module wall_tx(){
     translate([0, 0, -rf_support_h/2]){
       cube([rf_support_wall_inner, 2, 2], center=true);
     }
-    translate([-rf_support_wall_inner, 0, -rf_support_h/2-1.5]){
+    translate([-rf_support_wall_inner/2, 0, -rf_support_h/2-1.5]){
       cube([rf_support_wall_inner*2, 4, 1], center=true);
     }
   }
 }
 
 module main(){
+
   translate([case_l/2 + rf_support_h+4, 0, -case_h/2 - case_t/2]){
     rotate([0, 90]){
       wall_tx(
@@ -188,12 +189,6 @@ module main(){
       );
     }
   }
-  //projection(cut=true) rotate([0,90,0]) box_with_support();
-  //box_with_support_and_holes();
-
-  //box_with_support_and_holes();
-  //support();
-  //box_with_arduino_support();case_l
 }
 
 module led_hole(){
@@ -205,7 +200,7 @@ module reset_hole(){
 }
 
 module antenna_hole(){
-  cube([d + 0.01, l, h], center=true);
+  cube([d + 0.01 * 200, l, h], center=true);
 }
 
 module arduino_support(){
@@ -220,16 +215,42 @@ module arduino_support(){
 }
 
 module box(){
+  union(){
+    difference(){
+      plaque( l = l + 2*t,
+              w = w + 2*t,
+              h = h + 2*t);
+      plaque(l = l, w = w,  h= h + 2*t + 0.02);
+    }
+    translate([0, 0, -h/2 - t +t/2]){
+      plaque(l=l, w=w, h = t);
+    }
+  }
+}
+
+module plaque(r=3){
   difference(){
-    cube([l + 2 * t,
-          w + 2 * t,
-          h + 2 * t], center = true);
-    
-    // Move to cube to the top to have an opened box
-    translate([0, 0, t/2])
-      cube([l,
-            w,
-            h + t + 0.01], center = true);
+    cube([l, w, h], center = true);
+  
+    // Angles
+    translate([l/2 - r/2, w/2 - r/2, 0]){
+      angle(r, h);
+    }
+    translate([- l/2 + r/2, w/2 - r/2, 0]){
+      rotate([0, 0, 90]){
+        angle(r, h + 0.02);
+      }
+    }
+    translate([- l/2 + r/2, - w/2 + r/2, 0]){
+      rotate([0, 0, 180]){
+        angle(r, h + 0.02);
+      }
+    }
+    translate([l/2 - r/2, - w/2 + r/2, 0]){
+      rotate([0, 0, 270]){
+        angle(r, h + 0.02);
+      }
+    }
   }
 }
 
@@ -250,6 +271,39 @@ module rf_support(
       translate([0,l/2-wall_d/2]){
         cube([wall_d + 0.01, wall_d + 0.01, h + t + handle_h + 0.01], center=true);
       }
+    }
+  }
+}
+
+module angle(
+  r = 5,
+  h = 10
+  ){
+  intersection(){
+    difference(){
+      cube([r + 0.01, r + 0.01, h + 0.01], center=true);
+      cylinder(h + 0.01, r/2, r/2, center=true, $fn=100);
+    }
+    translate([r/2, r/2, 0]){
+      cube([r, r, h + 0.01], center=true);
+    }
+  }
+}
+
+
+l = 10;
+w = 1;
+h = 10;
+//r = sqrt(-sqrt(4 h^2 - 3 c^4) + 3 c^2 + 4 h)/sqrt(6)
+//r = sqrt(sqrt(4 h^2 - 3 c^4) + 3 c^2 + 4 h)/sqrt(6)
+
+r = h/(1-sqrt(1-w*w/4));
+
+translate([-r,0,0]){
+  union(){
+    cylinder(l, r, r, center=true, $fn=100);
+    translate([r,0,0]){
+      cube([h, w, l], center=true);
     }
   }
 }
