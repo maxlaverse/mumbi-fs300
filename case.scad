@@ -18,7 +18,7 @@ main(
   arduino_support_plot_l = 6,
 
   antenna_hole_h = 4,
-  antenna_hole_l = 2,
+  antenna_hole_l = 1.5,
   
   reset_d = 1,
   reset_offset_board = 25,
@@ -30,32 +30,22 @@ main(
   rf_support_h = 8,
   rf_support_l = 1.5,
   rf_support_board_t = 1,
-  rf_support_wall_inner = 0.75
+  rf_support_wall_inner = 0.75,
+  
+  clip_l =5,
+  clip_w = 2,
+  clip_h = 0.75        
 );
 
-module wall_tx(){
-  union(){
-    difference(){
-      cube([rf_support_wall_inner, case_w - 2*rf_support_l + 2*rf_support_wall_inner-0.02, rf_support_h], center=true);
-      translate([0, 0, 2]){
-        cube([rf_support_wall_inner + 0.01, arduino_w + 0.01, rf_support_h - arduino_support_h + 0.01], center=true);
-      }
-    }
-    translate([0, 0, -rf_support_h/2]){
-      cube([rf_support_wall_inner, 2, 2], center=true);
-    }
-    translate([-rf_support_wall_inner/2, 0, -rf_support_h/2-1.5]){
-      cube([rf_support_wall_inner*2, 4, 1], center=true);
-    }
-  }
-}
 
 module main(){
 
-  translate([case_l/2 + rf_support_h+4, 0, -case_h/2 - case_t/2]){
-    rotate([0, 90]){
+  translate([-4, 0, -1]){
+    rotate([0, 180]){
       wall_tx(
         case_w = case_w,
+        case_h = case_h,
+        case_t = case_t,
         rf_support_h = rf_support_h,
         rf_support_l = rf_support_l,
         arduino_w = arduino_w,
@@ -89,7 +79,34 @@ module main(){
           inner_tx_offset_1 = 8;
           inner_rx_offset_2 = 19;
           inner_tx_offset_2 = 29;
+          inner_clip_offset = 6;
            
+          //Clips
+          translate([0, 0, rf_support_h + rf_support_board_t + clip_w/2 - 0.2]){
+            translate([-case_l/2, -case_w/2 + inner_clip_offset, 0]){
+              clip(
+                l = clip_l,
+                w = clip_w,
+                h = clip_h);
+            }
+
+            // Clip middle
+            translate([-case_l/2, 0, 0]){
+              clip(
+                l = clip_l,
+                w = clip_w,
+                h = clip_h);
+            }
+        
+            // Clip TX
+            translate([-case_l/2, case_w/2 -inner_clip_offset, 0]){
+              clip(
+                l = clip_l,
+                w = clip_w,
+                h = clip_h);
+            }
+          }
+          
           // Support TX angle
           translate([-case_l/2 + rf_support_l/2 + inner_rx_offset_1, -case_w/2 + rf_support_l/2, rf_support_h/2]){
             cube([rf_support_l, rf_support_l, rf_support_h], center=true);
@@ -174,19 +191,31 @@ module main(){
         h = case_t
       );
     }
-    translate([-case_l/2 - case_t/2, -case_w/2 + antenna_hole_l/2, rf_support_h - case_h/2 + antenna_hole_h/2]){
+    antenna_offset_side = 1;
+    translate([-case_l/2 - case_t/2, -case_w/2 + antenna_hole_l/2 + antenna_offset_side, rf_support_h - case_h/2 + antenna_hole_h/2]){
       antenna_hole(
         h = antenna_hole_h, 
         l = antenna_hole_l,
         d = case_t
       );
     }
-    translate([-case_l/2 - case_t/2, case_w/2 - antenna_hole_l/2, rf_support_h - case_h/2 + antenna_hole_h/2]){
+    translate([-case_l/2 - case_t/2, case_w/2 - antenna_hole_l/2 - antenna_offset_side, rf_support_h - case_h/2 + antenna_hole_h/2]){
      antenna_hole(
         h = antenna_hole_h, 
         l = antenna_hole_l,
         d = case_t
       );
+    }
+    
+    larg = 3;
+    haut = case_h - rf_support_h + case_t;
+    translate([0,0, case_h/2 - haut/2 + case_t]){
+      translate([-case_l/2 + larg/2, case_w/2  - larg/2, 0]){
+        cube([larg, larg, haut], center=true);
+      }
+      translate([-case_l/2 + larg/2, -case_w/2  + larg/2, 0]){
+        cube([larg, larg, haut], center=true);
+      }
     }
   }
 }
@@ -216,14 +245,50 @@ module arduino_support(){
 
 module box(){
   union(){
-    difference(){
-      plaque( l = l + 2*t,
-              w = w + 2*t,
-              h = h + 2*t);
-      plaque(l = l, w = w,  h= h + 2*t + 0.02);
+    rounded_cube([l, w, h, t]);
+    f=3;
+    e=1;
+    intersection(){
+      translate([t/2, t/2, -t/2]){
+        rounded_cube([l-3*t, w-3*t, h-t, t/2]);
+      }
+      translate([l/2 - t/2 -f/2, w/2 - t/2 -f/2]){
+        cube([f, f, h + 2*t], center=true);
+      }
     }
-    translate([0, 0, -h/2 - t +t/2]){
-      plaque(l=l, w=w, h = t);
+    translate([l/2-e/2, -w/2 + f+0.25, -t/2]){
+      cube([e, e, h], center=true);
+    }
+    translate([l/2-f-0.25 , -w/2 +e/2, -t/2]){
+      cube([e, e, h], center=true);
+    }
+    translate([l/2-e/2, +w/2 - f-0.25, -t/2]){
+      cube([e, e, h], center=true);
+    }
+    translate([l/2-f-0.25 , w/2 -e/2, -t/2]){
+      cube([e, e, h], center=true);
+    }
+    intersection(){
+      translate([t/2, -t/2, -t/2]){
+        rounded_cube([l-3*t, w-3*t, h-t, t/2]);
+      }
+      translate([l/2 - t/2 -f/2, -w/2 + t/2 + f/2]){
+        cube([f, f, h + 2*t], center=true);
+      }
+    }
+  }
+}
+
+module rounded_cube(size){
+  union(){
+    difference(){
+      plaque( l = size[0] + 2*size[3],
+              w = size[1] + 2*size[3],
+              h = size[2] + 2*size[3]);
+      plaque(l = size[0], w = size[1],  h = size[2] + 2*size[3] + 0.02);
+    }
+    translate([0, 0, -size[2]/2 -size[3] +size[3]/2]){
+      plaque(l=size[0], w=size[1], h=size[3]);
     }
   }
 }
@@ -290,20 +355,34 @@ module angle(
   }
 }
 
+module clip(){
+  r = ((w/2)*(w/2) + h*h) / (2*h);
+  rotate([90,0,0]){
+    translate([-r+h/2,0,0]){
+      intersection(){
+        cylinder(l, r, r, center=true, $fn=100);
+        translate([r,0,0]){
+          cube([h, w, l], center=true);
+        }
+      }
+    }
+  }
+}
 
-l = 10;
-w = 1;
-h = 10;
-//r = sqrt(-sqrt(4 h^2 - 3 c^4) + 3 c^2 + 4 h)/sqrt(6)
-//r = sqrt(sqrt(4 h^2 - 3 c^4) + 3 c^2 + 4 h)/sqrt(6)
-
-r = h/(1-sqrt(1-w*w/4));
-
-translate([-r,0,0]){
+module wall_tx(){
+  haut = case_h - rf_support_h + case_t-1;
   union(){
-    cylinder(l, r, r, center=true, $fn=100);
-    translate([r,0,0]){
-      cube([h, w, l], center=true);
+    difference(){
+      cube([rf_support_wall_inner-0.01, case_w - 2*rf_support_l + 2*rf_support_wall_inner-0.02, rf_support_h], center=true);
+      translate([0, 0, 2]){
+        cube([rf_support_wall_inner + 0.01, arduino_w + 0.01, rf_support_h - arduino_support_h], center=true);
+      }
+    }
+    translate([-rf_support_wall_inner/4, 0, -rf_support_h/2]){
+      cube([rf_support_wall_inner/2-0.01, 4, 2], center=true);
+    }
+    translate([0, 0, -rf_support_h/2-haut/2-1]){
+      cube([rf_support_wall_inner-0.01, 4, haut], center=true);
     }
   }
 }
