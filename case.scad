@@ -54,14 +54,11 @@ module main(){
     }
   }
   
+  closing_h = rf_support_h+rf_support_board_t+1;
   difference(){
     union(){
-      box(
-        l = case_l,
-        w = case_w,
-        h = case_h,
-        t = case_t
-      );
+      rounded_cube([case_l, case_w, case_h, case_t]);
+      support_closing(l=case_l, w=case_w, h=closing_h, t=case_t);
       translate([0, 0, -case_h/2 + arduino_support_h/2 + 0.1]){
         arduino_support(
           arduino_l = arduino_l,
@@ -161,17 +158,6 @@ module main(){
               }
             }
           }
-          
-          // Mirror support TX for TX
-          translate([-case_l/2 - rf_support_l + inner_tx_offset_2, -case_w/2 + rf_support_l/2]){
-            rf_support(
-              h = rf_support_h + rf_support_board_t,
-              l = rf_support_l,
-              handle_h = 0,
-              wall_d = rf_support_wall_inner,
-              t = 0
-            );
-          }
         }
       }
     }
@@ -246,34 +232,55 @@ module arduino_support(){
 module box(){
   union(){
     rounded_cube([l, w, h, t]);
-    f=3;
+  }
+}
+
+module support_closing(){
+  union(){
+    width_rounded_clip=3;
     e=1;
     intersection(){
       translate([t/2, t/2, -t/2]){
-        rounded_cube([l-3*t, w-3*t, h-t, t/2]);
+        rounded_cube([l-3*t, w-3*t, h, t/2]);
       }
-      translate([l/2 - t/2 -f/2, w/2 - t/2 -f/2]){
-        cube([f, f, h + 2*t], center=true);
+      translate([l/2 - t/2 -width_rounded_clip/2, w/2 - t/2 -width_rounded_clip/2]){
+        cube([width_rounded_clip, width_rounded_clip, h + 2*t], center=true);
       }
-    }
-    translate([l/2-e/2, -w/2 + f+0.25, -t/2]){
-      cube([e, e, h], center=true);
-    }
-    translate([l/2-f-0.25 , -w/2 +e/2, -t/2]){
-      cube([e, e, h], center=true);
-    }
-    translate([l/2-e/2, +w/2 - f-0.25, -t/2]){
-      cube([e, e, h], center=true);
-    }
-    translate([l/2-f-0.25 , w/2 -e/2, -t/2]){
-      cube([e, e, h], center=true);
     }
     intersection(){
       translate([t/2, -t/2, -t/2]){
-        rounded_cube([l-3*t, w-3*t, h-t, t/2]);
+        rounded_cube([l-3*t, w-3*t, h, t/2]);
       }
-      translate([l/2 - t/2 -f/2, -w/2 + t/2 + f/2]){
-        cube([f, f, h + 2*t], center=true);
+      translate([l/2 - t/2 -width_rounded_clip/2, -w/2 + t/2 + width_rounded_clip/2]){
+        cube([width_rounded_clip, width_rounded_clip, h + 2*t], center=true);
+      }
+    }
+    translate([l/2-e/2, -w/2 + width_rounded_clip+0.25]){
+      cube([e, e, h], center=true);
+    }
+    translate([l/2-width_rounded_clip-0.25 , -w/2 +e/2]){
+      cube([e, e, h], center=true);
+    }
+    translate([l/2-e/2, +w/2 - width_rounded_clip-0.25]){
+      cube([e, e, h], center=true);
+    }
+    translate([l/2-width_rounded_clip-0.25 , w/2 -e/2]){
+      cube([e, e, h], center=true);
+    }
+    translate([-0.61, -w/2 -2+ width_rounded_clip, 0]){
+      difference(){
+        cube([6*e, 2*e, h], center=true);
+        translate([0, -e/2, 0]){
+          cube([4*e, e+0.01, h+0.01], center=true);
+        }
+      }
+    }
+    translate([9.38, w/2 +2 - width_rounded_clip, 0]){
+      difference(){
+        cube([6*e, 2*e, h], center=true);
+        translate([0, e/2, 0]){
+          cube([4*e, e+0.01, h+0.01], center=true);
+        }
       }
     }
   }
