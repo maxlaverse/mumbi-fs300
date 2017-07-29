@@ -1,3 +1,11 @@
+cube([19,19,10], center=true);
+translate([20,10,10]){
+  cube([13,30,10], center=true);
+}
+translate([20,10,20]){
+  cube([43,18,8], center=true);
+}
+
 main(
   case_l = 43,
   case_w = 33,
@@ -37,8 +45,9 @@ main(
   clip_h = 0.75        
 );
 
-
 module main(){
+}
+module main2(){
 
   translate([-4, 0, -1]){
     rotate([0, 180]){
