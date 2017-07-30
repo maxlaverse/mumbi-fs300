@@ -7,46 +7,40 @@ main(
   
   tx_l = 19,
   tx_w = 19,
+  tx_antenna_offset_x = 0.5,
   
   rx_l = 30,
   rx_w = 13,
+  rx_antenna_offset_x = 0.5,
   
+  antenna_hole_l = 1.5,
 
-  case_h = 11,
-  case_t = 1.5,
-  
   usb_l = 7.8,
   usb_h = 4,
   usb_d = 1.5,
-   
-  antenna_hole_l = 1.5,
-      
-  clip_l =5,
-  clip_w = 2,
-  clip_h = 0.75   , 
+  usb_offset_z = 4.5,
 
-  rf_support_h = 2,
-  support_extra_h = 2,
+
+  case_h = 11,
+  case_t = 1.5,
   sep_rx_tx = 14,
   sep_arduino_tx = 1,
-  superposition_tx = 12,
+
+  support_h = 2,
+  support_extra_h = 2,
   
-  arduino_support_outer_h = 2,
-  arduino_support_l = 3,
-  arduino_support_outer_w = 1,
-  arduino_support_inner_w = 1,
-  arduino_support_inner_h = 1,
+  arduino_support_front_l = 2,
+  arduino_support_front_w = 1,
   
-  arduino_support_h = 2,
+  arduino_support_middle_l = 4,
+  arduino_support_middle_w = 1,
   
   rf_double_extra_support_w = 2,
   rf_double_support_l = 1,
+  
   rf_simple_support_l = 1,
   rf_simple_support_w = 2,
-  arduino_support_front_l = 2,
-  arduino_support_front_w = 1,
-  arduino_support_middle_l = 4,
-  arduino_support_middle_w = 1,
+  
   rx_support_extra_w = 1
 );
 
@@ -68,13 +62,17 @@ module main(){
           t = case_t,
           h = case_h);
       
-      // TX antenna
-      translate([case_small_l + case_big_l + case_t/2, case_big_w/2 - tx_w+1, case_h/2 + case_t/2])
-      cube([case_t + 0.02, antenna_hole_l, case_h - rf_support_h - case_t + 0.51], center=true);
+      // Antennas
+      antenna_offset_z = case_h/2 + case_t/2 - 0.5;
+      antenna_size = [case_t + 0.02, antenna_hole_l, case_h - support_h - case_t + 0.01];
+      
+      // RX antenna
+      translate([case_l + case_t/2, case_big_w/2 - tx_w+antenna_hole_l/2 + tx_antenna_offset_x, antenna_offset_z])
+      cube(antenna_size, center=true);
       
       // TX antenna
-      translate([case_small_l + case_big_l + case_t/2, -case_big_w/2 + rx_w - antenna_hole_l/2 - 0.5, case_h/2 + case_t/2])
-      cube([case_t + 0.02, antenna_hole_l, case_h - rf_support_h - case_t + 0.51], center=true);
+      translate([case_l + case_t/2, -case_big_w/2 + rx_w - antenna_hole_l/2 - rx_antenna_offset_x, antenna_offset_z])
+      cube(antenna_size, center=true);
       
       // Screw hole
       translate([(arduino_l + case_l)/2, 0, 0])
@@ -82,10 +80,10 @@ module main(){
 
       // Hole for head of screw
       translate([(arduino_l + case_l)/2, 0, -1])
-      cylinder(2, 3, 3, $fn=100, center=true);     
+      cylinder(1.01, 2, 2, $fn=100, center=true);     
      
       // USB
-      translate([-case_t/2, 0, usb_d/2 + 4.5])
+      translate([-case_t/2, 0, usb_d/2 + usb_offset_z])
       cube([usb_d+0.01, usb_l+0.01, usb_h+0.01], center=true);      
     }
     
@@ -96,60 +94,60 @@ module main(){
     cylinder(2+0.02,1,1, $fn=100, center=true);}
     
     // Support Arduino left front
-    translate([arduino_support_front_l/2, arduino_w/2-arduino_support_front_w/2, arduino_support_h/2])
-    cube([arduino_support_front_l, arduino_support_front_w, arduino_support_h], center=true);
+    translate([arduino_support_front_l/2, arduino_w/2-arduino_support_front_w/2, support_h/2])
+    cube([arduino_support_front_l, arduino_support_front_w, support_h], center=true);
 
     // Support Arduino right front
-    translate([arduino_support_front_l/2, -arduino_w/2+arduino_support_front_w/2, arduino_support_h/2])
-    cube([arduino_support_front_l, arduino_support_front_w, arduino_support_h], center=true);   
+    translate([arduino_support_front_l/2, -arduino_w/2+arduino_support_front_w/2, support_h/2])
+    cube([arduino_support_front_l, arduino_support_front_w, support_h], center=true);   
       
     // Support Arduino middle left
     support_middle_offset = 2;
-    translate([case_small_l-arduino_support_middle_l/2 - support_middle_offset, arduino_w/2-arduino_support_front_w/2, arduino_support_h/2])
-    cube([arduino_support_middle_l, arduino_support_middle_w, arduino_support_h], center=true);   
+    translate([case_small_l-arduino_support_middle_l/2 - support_middle_offset, arduino_w/2-arduino_support_front_w/2, support_h/2])
+    cube([arduino_support_middle_l, arduino_support_middle_w, support_h], center=true);   
 
     // Support Arduino middle right
-    translate([case_small_l-arduino_support_middle_l/2 - support_middle_offset, -arduino_w/2+arduino_support_front_w/2, arduino_support_h/2])
-    cube([arduino_support_middle_l, arduino_support_middle_w, arduino_support_h], center=true);   
+    translate([case_small_l-arduino_support_middle_l/2 - support_middle_offset, -arduino_w/2+arduino_support_front_w/2, support_h/2])
+    cube([arduino_support_middle_l, arduino_support_middle_w, support_h], center=true);   
             
     // Block Arduino + RX/TX
     translate([arduino_l + sep_arduino_tx/2, 0, 0])
     block_arduino(
       w = sep_arduino_tx,
       l = arduino_w - 4,
-      h = rf_support_h,
+      h = support_h,
       extra_h = support_extra_h,
       inner_w = 1,
       tx_inner_offset = 3);
   
     // Arduino
-    translate([arduino_l/2, 0, arduino_support_inner_h + 1+ arduino_t/2])
+    translate([arduino_l/2, 0, support_h+ arduino_t/2])
     arduino(l = arduino_l, w = arduino_w, t = arduino_t);
 
     // RX
-    translate([case_big_l+case_small_l-rx_l/2, -case_big_w/2 + rx_w/2, rf_support_h])
+    translate([case_big_l+case_small_l-rx_l/2, -case_big_w/2 + rx_w/2, support_h])
     rotate([0, 0, 180])
     rx(l = rx_l, w = rx_w, t = 1);
 
     // TX
-    translate([case_big_l+case_small_l-tx_l/2, case_big_w/2 - tx_w/2, rf_support_h])
+    translate([case_big_l+case_small_l-tx_l/2, case_big_w/2 - tx_w/2, support_h])
     tx(l = tx_l, w = tx_w, t = 1);
      
     // Support TX/RX wall
     translate([case_big_l+case_small_l-rf_double_support_l/2-0.5, case_big_w/2 - tx_w - sep_rx_tx/2])
     difference(){
-      rf_double_support( h = rf_support_h,
+      rf_double_support( h = support_h,
                         extra_h = support_extra_h,
                         w = sep_rx_tx,
                         extra_w = rf_double_extra_support_w,
                         l = rf_double_support_l+1);
-      translate([-0.5,0,(support_extra_h + rf_support_h)/2])
-      cube([1 + 0.01,sep_rx_tx-2 + 0.01,support_extra_h + rf_support_h + 0.01], center=true);
+      translate([-0.5,0,(support_extra_h + support_h)/2])
+      cube([1 + 0.01,sep_rx_tx-2 + 0.01,support_extra_h + support_h + 0.01], center=true);
     }
 
     // Support TX wall right front
     translate([case_big_l+case_small_l-4, -case_big_w/2 + 2/2])
-    rf_simple_support(h = rf_support_h,
+    rf_simple_support(h = support_h,
                     extra_h = 0,
                     w = 1,
                     extra_w = 1,
@@ -159,19 +157,19 @@ module main(){
     tx_w_s_w2 = 2;
     translate([case_big_l+case_small_l-rx_l-rx_support_extra_w/2+tx_w_s_w2/2, -case_big_w/2 +rx_w/2])
     union(){
-      rf_simple_support(h = rf_support_h,
+      rf_simple_support(h = support_h,
                         extra_h = support_extra_h,
                         w = rx_support_extra_w,
                         extra_w = tx_w_s_w2,
                         l = rx_w);
-      translate([0, rx_w/2+1/2, (rf_support_h+support_extra_h)/2])
-      cube([rx_support_extra_w+tx_w_s_w2,1,rf_support_h+support_extra_h], center=true);
+      translate([0, rx_w/2+1/2, (support_h+support_extra_h)/2])
+      cube([rx_support_extra_w+tx_w_s_w2,1,support_h+support_extra_h], center=true);
     }
 
     // Support RX wall left end
     rf_simple_support_extra_w = 2;
     translate([case_l-tx_l-rf_simple_support_l/2+rf_simple_support_extra_w/2, case_big_w/2 - rf_simple_support_w/2])
-    rf_simple_support(h = rf_support_h,
+    rf_simple_support(h = support_h,
                     extra_h = support_extra_h,
                     w = rf_simple_support_l,
                     extra_w = rf_simple_support_extra_w,
@@ -179,7 +177,7 @@ module main(){
     
     // Support RX wall left front
     translate([case_big_l+case_small_l-4, case_big_w/2 - 2/2])
-    rf_simple_support(h = rf_support_h,
+    rf_simple_support(h = support_h,
                     extra_h = 0,
                     w = 1,
                     extra_w = 1,
@@ -303,22 +301,6 @@ module angle2(){
     }
     translate([r/2, r/2]){
       square([r, r], center=true);
-    }
-  }
-}
-
-
-module clip(){
-  r = ((w/2)*(w/2) + h*h) / (2*h);
-  translate([0, -w, 0])
-  rotate([90,0,0]){
-    translate([-r+h/2,0,0]){
-      intersection(){
-        cylinder(l, r, r, center=true, $fn=100);
-        translate([r,0,0]){
-          cube([h, w, l], center=true);
-        }
-      }
     }
   }
 }
