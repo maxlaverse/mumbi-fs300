@@ -1,249 +1,262 @@
+use <components.scad>
+
 main(
-  case_l = 43,
-  case_w = 33,
-  case_h = 10,
-  case_t = 1.5,
-  
-  usb_l = 7.8,
-  usb_h = 4,
-  usb_d = 1.5,
-  
   arduino_l = 43,
   arduino_w = 18,
-  arduino_h = 1,
   
-  arduino_support_h = 4,
-  arduino_support_inner = 1,
-  arduino_support_outer = 2,
-  arduino_support_plot_l = 6,
-
-  antenna_hole_h = 4,
-  antenna_hole_l = 1.5,
-  
-  reset_d = 1,
-  reset_offset_board = 25,
-  
-  led_hole_l = 5,
-  led_hole_w = 1,
-  led_offset_board = 32.5,
-  
-  rf_support_h = 8,
-  rf_support_l = 1.5,
-  rf_support_board_t = 1,
-  rf_support_wall_inner = 0.75,
-  
-  clip_l =5,
-  clip_w = 2,
-  clip_h = 0.75   , 
-
   tx_l = 19,
   tx_w = 19,
   
   rx_l = 30,
   rx_w = 13,
   
-  sep_rx_tx = 2,
+
+  case_h = 7,
+  case_t = 1.5,
+  case_small_l = 25,
+  case_big_l = 38,
+  
+  usb_l = 7.8,
+  usb_h = 4,
+  usb_d = 1.5,
+   
+  antenna_hole_h = 4,
+  antenna_hole_l = 1.5,
+      
+  clip_l =5,
+  clip_w = 2,
+  clip_h = 0.75   , 
+
+  rf_support_h = 2,
+  sep_rx_tx = 14,
   superposition_tx = 12,
   
   arduino_support_outer_h = 2,
   arduino_support_l = 3,
   arduino_support_outer_w = 1,
   arduino_support_inner_w = 1,
-  arduino_support_inner_h = 1
+  arduino_support_inner_h = 1,
+  
+  arduino_support_h = 2,
+  
+  rf_double_extra_support_w = 2,
+  rf_double_support_l = 2,
+  arduino_support_front_l = 2,
+  arduino_support_front_w = 1,
+  arduino_support_middle_l = 4,
+  arduino_support_middle_w = 1
 );
 
 module main(){
-  closing_h = rf_support_h+rf_support_board_t+1;
-  case_l = superposition_tx + arduino_l;
-  case_w = rx_w + tx_w + sep_rx_tx;
-  case_t = 1;
-  case_h = 10;
+  case_big_w = tx_w + rx_w + sep_rx_tx;
+  case_small_w = arduino_w;
   
-  difference(){
-    union(){
-      box(  l = case_l,
-            w = case_w,
-            t = case_t,
-            h = case_h);
+  union()
+    // Box
+    box(l_b = case_big_l,
+        l_s = case_small_l,
+        w_s = case_small_w,
+        w_b = case_big_w,
+        t = case_t,
+        h = case_h);
+  
+    // Support Arduino left front
+    translate([arduino_support_front_l/2, arduino_w/2-arduino_support_front_w/2, arduino_support_h/2])
+    cube([arduino_support_front_l, arduino_support_front_w, arduino_support_h], center=true);
+
+    // Support Arduino right front
+    translate([arduino_support_front_l/2, -arduino_w/2+arduino_support_front_w/2, arduino_support_h/2])
+    cube([arduino_support_front_l, arduino_support_front_w, arduino_support_h], center=true);   
+      
+    // Support Arduino middle left
+    support_middle_offset = 2;
+    translate([case_small_l-arduino_support_middle_l/2 - support_middle_offset, arduino_w/2-arduino_support_front_w/2, arduino_support_h/2])
+    cube([arduino_support_middle_l, arduino_support_middle_w, arduino_support_h], center=true);   
+
+    // Support Arduino middle right
+    translate([case_small_l-arduino_support_middle_l/2 - support_middle_offset, -arduino_w/2+arduino_support_front_w/2, arduino_support_h/2])
+    cube([arduino_support_middle_l, arduino_support_middle_w, arduino_support_h], center=true);   
+            
+    // Clip Arduino right
+    translate([case_small_l-4-support_middle_offset,-arduino_w/2, 3.5])
+    rotate([0, 0, 90])
+    clip(h=0.5, w=2, l=4);
+ 
+    // Clip Arduino left
+    translate([case_small_l-support_middle_offset,+arduino_w/2, 3.5])
+    rotate([0, 0, 270])
+    clip(h=0.5, w=2, l=4);
    
-      // Support Arduino
-      translate([0, 0, -case_h/2 + arduino_support_outer_h/2 + arduino_support_inner_h/2])
-      {
-        for (x = [0, arduino_l], y = [-1, 1])
-        translate([case_l/2 - arduino_support_l/2 - x, y * (arduino_w/2 + arduino_support_outer_w), 0])
-        rotate([0, 0, max(0, y) * 180])
-        arduino_support(l = arduino_support_l,
-                outer_w = arduino_support_outer_w,
-                outer_h = arduino_support_outer_h,
-                inner_w = arduino_support_inner_w,
-                inner_h = arduino_support_inner_h);     
-      }
+    // Block Arduino left
+    translate([arduino_l, arduino_w/2])
+    rotate([0, 0, 90])
+    arduino_support(l = arduino_support_l,
+            outer_w = arduino_support_outer_w,
+            outer_h = arduino_support_outer_h,
+            inner_w = arduino_support_inner_w,
+            inner_h = arduino_support_inner_h,
+            d = 1);    
+         
+    // Block Arduino right  
+    translate([arduino_l, -arduino_w/2])
+    mirror()
+    rotate([0, 0, 270])
+    arduino_support(l = arduino_support_l,
+            outer_w = arduino_support_outer_w,
+            outer_h = arduino_support_outer_h,
+            inner_w = arduino_support_inner_w,
+            inner_h = arduino_support_inner_h,
+            d = 1);   
+  
+     // Arduino
+     translate([arduino_l/2, 0, arduino_support_inner_h +1+ 1.25/2])
+     arduino(l = arduino_l, w = arduino_w, t = 1.25);
+     
+     // RX
+     translate([case_big_l+case_small_l-rx_l/2, -case_big_w/2 + rx_w/2, rf_support_h])
+     rotate([0, 180, 0])
+     rx(l = rx_l, w = rx_w, t = 1.25);
+     
+     // TX
+     translate([case_big_l+case_small_l-tx_l/2, case_big_w/2 - tx_w/2, rf_support_h])
+     rotate([180, 0, 0])
+     tx(l = tx_l, w = tx_w, t = 1.25);
+     
+     // Support TX/RX wall
+     translate([case_big_l+case_small_l-rf_double_support_l/2, case_big_w/2 - tx_w - sep_rx_tx/2, 1/2])
+     rf_double_support( h = rf_support_h,
+                        extra_h = 1,
+                        w = sep_rx_tx,
+                        extra_w = rf_double_extra_support_w,
+                        l = rf_double_support_l);
+     
+     // Support TX/RX inner
+     translate([arduino_l+0.5, case_big_w/2 - tx_w - sep_rx_tx/2, 1/2])
+     rf_double_support( h = rf_support_h,
+                        extra_h = 1,
+                        w = sep_rx_tx,
+                        extra_w = rf_double_extra_support_w,
+                        l = rf_double_support_l);
+     
+    // Support RX wall
+    translate([case_small_l, -case_small_w, 0])
+    cube([1, (case_big_w - case_small_w)/2, rf_support_h]);
+     
+    // Add a wall between small and big to block arduino and support RX
+    // Support TX wall left
+    translate([tx_l/2+26+0.5, case_big_w/2 - 2/2, 1/2])
+    {
+      rotate([0, 0, -90])
+      rf_simple_support(h = rf_support_h,
+                        extra_h = 1,
+                        w = 2,
+                        extra_w = 2,
+                        l = 2);
     }
     
-    // Usb
-    translate([case_l/2 + usb_d/2, 0, -case_h/2 + usb_h/2 + arduino_support_outer_h + arduino_h])
-    cube([usb_d + 0.02, usb_l, usb_h], center = true);
+}
+
+module rf_double_support(){
+  translate([0, 0, h/2])
+  difference(){
+    cube([l,w+extra_w,h+extra_h], center=true);
+    
+    translate([0,w/2+extra_w/4,h/2])
+    cube([l+0.01,extra_w/2+0.01,extra_h+0.01], center=true);
   }
 }
 
-module arduino_support(){
+module rf_simple_support(){
+  translate([0, 0, h/2])
+  difference(){
+    cube([l,w+extra_w,h+extra_h], center=true);
+    
+    translate([0,w/2,h/2])
+    cube([l+0.01,extra_w+0.01,extra_h+0.01], center=true);
+  }
+}
+
+module arduino_support(
+  d = 0){
+  rotate(90)
+  translate([0, 0, (outer_h + inner_h)/2])
   difference(){
     cube([l, outer_w + inner_w, outer_h + inner_h], center=true);
-    translate([0, outer_w/2, outer_h/2]){
-      cube([l + 0.01, inner_w + 0.01, inner_h + 0.01], center=true);
+    translate([d, outer_w/2, outer_h/2]){
+      cube([l + 0.01 - d, inner_w + 0.01, inner_h + 0.01], center=true);
     }
   } 
 }
 
-module rf_support(
-    handle_h = 1
-    ){
-
-  translate([0, 0, (h + t + handle_h)/2]){
-    difference(){
-      cube([l*2, l, h + t + handle_h], center=true);
-      translate([-l/2-wall_d/2,0, h/2]){
-        cube([l+0.01, l+0.01, t + handle_h + 0.01], center=true);
-      }
-      translate([-l/2, 0, h/2 + l -handle_h - t]){
-        cube([l+0.01, l+0.01, t+0.01], center=true);
-      }
-      // For wall slide
-      translate([0,l/2-wall_d/2]){
-        cube([wall_d + 0.01, wall_d + 0.01, h + t + handle_h + 0.01], center=true);
-      }
-    }
-  }
-}
-
-module antenna_hole(){
-  cube([d + 0.01 * 200, l, h], center=true);
-}
-
-module arduino_support2(){
-  difference(){
-    cube([arduino_l, arduino_w + 2*(outer - inner), h + arduino_h], center = true);
-    cube([arduino_l + 2*0.01, arduino_w - 2*inner, h + arduino_h + 0.01], center = true);
-    cube([arduino_l - plot_l, arduino_w + 2*(outer - inner) + 0.01, h + arduino_h + 0.01], center = true);
-    translate([0, 0, h/2 + 0.01/2]){
-        cube([arduino_l, arduino_w, arduino_h + 0.01], center = true);
-    }
-  }
-}
-
 module box(){
-  rounded_cube([l, w, h, t]);
-}
-
-module support_closing(){
-  union(){
-    width_rounded_clip=3;
-    e=1;
-    intersection(){
-      translate([t/2, t/2, -t/2]){
-        rounded_cube([l-3*t, w-3*t, h, t/2]);
-      }
-      translate([l/2 - t/2 -width_rounded_clip/2, w/2 - t/2 -width_rounded_clip/2]){
-        cube([width_rounded_clip, width_rounded_clip, h + 2*t], center=true);
-      }
-    }
-    intersection(){
-      translate([t/2, -t/2, -t/2]){
-        rounded_cube([l-3*t, w-3*t, h, t/2]);
-      }
-      translate([l/2 - t/2 -width_rounded_clip/2, -w/2 + t/2 + width_rounded_clip/2]){
-        cube([width_rounded_clip, width_rounded_clip, h + 2*t], center=true);
-      }
-    }
-    translate([l/2-e/2, -w/2 + width_rounded_clip+0.25]){
-      cube([e, e, h], center=true);
-    }
-    translate([l/2-width_rounded_clip-0.25 , -w/2 +e/2]){
-      cube([e, e, h], center=true);
-    }
-    translate([l/2-e/2, +w/2 - width_rounded_clip-0.25]){
-      cube([e, e, h], center=true);
-    }
-    translate([l/2-width_rounded_clip-0.25 , w/2 -e/2]){
-      cube([e, e, h], center=true);
-    }
-    translate([-0.61, -w/2 -2+ width_rounded_clip, 0]){
-      difference(){
-        cube([6*e, 2*e, h], center=true);
-        translate([0, -e/2, 0]){
-          cube([4*e, e+0.01, h+0.01], center=true);
-        }
-      }
-    }
-    translate([9.38, w/2 +2 - width_rounded_clip, 0]){
-      difference(){
-        cube([6*e, 2*e, h], center=true);
-        translate([0, e/2, 0]){
-          cube([4*e, e+0.01, h+0.01], center=true);
-        }
-      }
-    }
-  }
-}
-
-module rounded_cube(size){
-  union(){
-    difference(){
-      plaque( l = size[0] + 2*size[3],
-              w = size[1] + 2*size[3],
-              h = size[2] + 2*size[3]);
-      plaque(l = size[0], w = size[1],  h = size[2] + 2*size[3] + 0.02);
-    }
-    translate([0, 0, -size[2]/2 -size[3] +size[3]/2]){
-      plaque(l=size[0], w=size[1], h=size[3]);
-    }
-  }
-}
-
-module plaque(r=3){
+  r = 2;
+  translate([-t, 0, -t])
   difference(){
-    cube([l, w, h], center = true);
-  
-    // Angles
-    translate([l/2 - r/2, w/2 - r/2, 0]){
-      angle(r, h);
-    }
-    translate([- l/2 + r/2, w/2 - r/2, 0]){
-      rotate([0, 0, 90]){
-        angle(r, h + 0.02);
-      }
-    }
-    translate([- l/2 + r/2, - w/2 + r/2, 0]){
-      rotate([0, 0, 180]){
-        angle(r, h + 0.02);
-      }
-    }
-    translate([l/2 - r/2, - w/2 + r/2, 0]){
-      rotate([0, 0, 270]){
-        angle(r, h + 0.02);
-      }
-    }
+    linear_extrude(h)
+    plaque3(l_b = l_b + 2*t,
+      l_s = l_s,
+      w_s = w_s + 2*t,
+      w_b = w_b + 2*t,
+      r = r
+    );
+    
+    translate([t, 0, t])
+    linear_extrude(h)
+    plaque3(l_b = l_b,
+      l_s = l_s,
+      w_s = w_s,
+      w_b = w_b,
+      r = 0
+    );
   }
 }
 
+module plaque3(){
+  difference(){
+    polygon(points=[[0,-w_s/2],[l_s,-w_s/2],[l_s,-w_b/2],[l_s+l_b,-w_b/2],[l_b+l_s,w_b/2],[l_s,w_b/2],[l_s,w_s/2],[0,w_s/2]]);
+    
+    translate([r/2, w_s/2 - r/2])
+    rotate([0, 0, 90])
+    angle2(r=r);
+    
+    translate([r/2, - w_s/2 + r/2])
+    rotate([0, 0, -180])
+    angle2(r=r);
+    
+    translate([r/2 + l_s, w_b/2 - r/2])
+    rotate([0, 0, 90])
+    angle2(r=r);
+    
+    translate([r/2 + l_s, -w_b/2 + r/2])
+    rotate([0, 0, -180])
+    angle2(r=r);
+    
+    translate([-r/2 + l_b + l_s, +w_b/2 - r/2])
+    rotate([0, 0, 0])
+    angle2(r=r);
+    
+    translate([-r/2 + l_b + l_s, -w_b/2 + r/2])
+    rotate([0, 0, 270])
+    angle2(r=r);
+  }
+}
 
-module angle(
-  r = 5,
-  h = 10
-  ){
+module angle2(){
   intersection(){
     difference(){
-      cube([r + 0.01, r + 0.01, h + 0.01], center=true);
-      cylinder(h + 0.01, r/2, r/2, center=true, $fn=100);
+      square([r + 0.01, r + 0.01], center=true);
+      circle(r/2, r/2, center=true, $fn=100);
     }
-    translate([r/2, r/2, 0]){
-      cube([r, r, h + 0.01], center=true);
+    translate([r/2, r/2]){
+      square([r, r], center=true);
     }
   }
 }
+
 
 module clip(){
   r = ((w/2)*(w/2) + h*h) / (2*h);
+  translate([0, -w, 0])
   rotate([90,0,0]){
     translate([-r+h/2,0,0]){
       intersection(){
@@ -252,24 +265,6 @@ module clip(){
           cube([h, w, l], center=true);
         }
       }
-    }
-  }
-}
-
-module wall_tx(){
-  haut = case_h - rf_support_h + case_t-1;
-  union(){
-    difference(){
-      cube([rf_support_wall_inner-0.01, case_w - 2*rf_support_l + 2*rf_support_wall_inner-0.02, rf_support_h], center=true);
-      translate([0, 0, 2]){
-        cube([rf_support_wall_inner + 0.01, arduino_w + 0.01, rf_support_h - arduino_support_h], center=true);
-      }
-    }
-    translate([-rf_support_wall_inner/4, 0, -rf_support_h/2]){
-      cube([rf_support_wall_inner/2-0.01, 4, 2], center=true);
-    }
-    translate([0, 0, -rf_support_h/2-haut/2-1]){
-      cube([rf_support_wall_inner-0.01, 4, haut], center=true);
     }
   }
 }
