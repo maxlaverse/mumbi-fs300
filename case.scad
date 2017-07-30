@@ -3,6 +3,7 @@ use <components.scad>
 main(
   arduino_l = 43,
   arduino_w = 18,
+  arduino_t = 1.1,
   
   tx_l = 19,
   tx_w = 19,
@@ -11,16 +12,13 @@ main(
   rx_w = 13,
   
 
-  case_h = 7,
+  case_h = 11,
   case_t = 1.5,
-  case_small_l = 25,
-  case_big_l = 38,
   
   usb_l = 7.8,
   usb_h = 4,
   usb_d = 1.5,
    
-  antenna_hole_h = 4,
   antenna_hole_l = 1.5,
       
   clip_l =5,
@@ -28,6 +26,7 @@ main(
   clip_h = 0.75   , 
 
   rf_support_h = 2,
+  support_extra_h = 2,
   sep_rx_tx = 14,
   superposition_tx = 12,
   
@@ -50,16 +49,30 @@ main(
 module main(){
   case_big_w = tx_w + rx_w + sep_rx_tx;
   case_small_w = arduino_w;
+  case_l = arduino_l + tx_l + 1;
+  case_big_l = rx_l + 2;
+  case_small_l = case_l - case_big_l;
   
   union()
-    // Box
-    box(l_b = case_big_l,
-        l_s = case_small_l,
-        w_s = case_small_w,
-        w_b = case_big_w,
-        t = case_t,
-        h = case_h);
   
+    union(){
+      // Box
+      box(l_b = case_big_l,
+          l_s = case_small_l,
+          w_s = case_small_w,
+          w_b = case_big_w,
+          t = case_t,
+          h = case_h);
+      
+      // TX antenna
+      translate([case_small_l + case_big_l + case_t/2, case_big_w/2 - tx_w+1, case_h/2 + case_t/2])
+      cube([case_t + 0.02, antenna_hole_l, case_h - rf_support_h - case_t + 0.51], center=true);
+      
+      // TX antenna
+      translate([case_small_l + case_big_l + case_t/2, -case_big_w/2 + rx_w - antenna_hole_l/2 - 0.5, case_h/2 + case_t/2])
+      #cube([case_t + 0.02, antenna_hole_l, case_h - rf_support_h - case_t + 0.51], center=true);
+    }
+    
     // Support Arduino left front
     translate([arduino_support_front_l/2, arduino_w/2-arduino_support_front_w/2, arduino_support_h/2])
     cube([arduino_support_front_l, arduino_support_front_w, arduino_support_h], center=true);
@@ -87,87 +100,104 @@ module main(){
     rotate([0, 0, 270])
     clip(h=0.5, w=2, l=4);
    
-    // Block Arduino left
-    translate([arduino_l, arduino_w/2])
-    rotate([0, 0, 90])
-    arduino_support(l = arduino_support_l,
-            outer_w = arduino_support_outer_w,
-            outer_h = arduino_support_outer_h,
-            inner_w = arduino_support_inner_w,
-            inner_h = arduino_support_inner_h,
-            d = 1);    
-         
-    // Block Arduino right  
-    translate([arduino_l, -arduino_w/2])
-    mirror()
-    rotate([0, 0, 270])
-    arduino_support(l = arduino_support_l,
-            outer_w = arduino_support_outer_w,
-            outer_h = arduino_support_outer_h,
-            inner_w = arduino_support_inner_w,
-            inner_h = arduino_support_inner_h,
-            d = 1);   
+    // Block Arduino + RX/TX
+    translate([arduino_l, 0, 0])
+    block_arduino(
+      w = 1,
+      l = arduino_w - 4,
+      h = rf_support_h,
+      extra_h = support_extra_h,
+      inner_w = 1,
+      tx_inner_offset = 4);
   
-     // Arduino
-     translate([arduino_l/2, 0, arduino_support_inner_h +1+ 1.25/2])
-     arduino(l = arduino_l, w = arduino_w, t = 1.25);
+    // Arduino
+    translate([arduino_l/2, 0, arduino_support_inner_h +1+ arduino_t/2])
+    arduino(l = arduino_l, w = arduino_w, t = arduino_t);
+
+    // RX
+    translate([case_big_l+case_small_l-rx_l/2, -case_big_w/2 + rx_w/2, rf_support_h])
+    rotate([0, 0, 180])
+    rx(l = rx_l, w = rx_w, t = 1);
+
+    // TX
+    translate([case_big_l+case_small_l-tx_l/2, case_big_w/2 - tx_w/2, rf_support_h])
+    tx(l = tx_l, w = tx_w, t = 1);
      
-     // RX
-     translate([case_big_l+case_small_l-rx_l/2, -case_big_w/2 + rx_w/2, rf_support_h])
-     rotate([0, 180, 0])
-     rx(l = rx_l, w = rx_w, t = 1.25);
-     
-     // TX
-     translate([case_big_l+case_small_l-tx_l/2, case_big_w/2 - tx_w/2, rf_support_h])
-     rotate([180, 0, 0])
-     tx(l = tx_l, w = tx_w, t = 1.25);
-     
-     // Support TX/RX wall
-     translate([case_big_l+case_small_l-rf_double_support_l/2, case_big_w/2 - tx_w - sep_rx_tx/2, 1/2])
-     rf_double_support( h = rf_support_h,
-                        extra_h = 1,
-                        w = sep_rx_tx,
-                        extra_w = rf_double_extra_support_w,
-                        l = rf_double_support_l);
-     
-     // Support TX/RX inner
-     translate([arduino_l+0.5, case_big_w/2 - tx_w - sep_rx_tx/2, 1/2])
-     rf_double_support( h = rf_support_h,
-                        extra_h = 1,
-                        w = sep_rx_tx,
-                        extra_w = rf_double_extra_support_w,
-                        l = rf_double_support_l);
-     
-    // Support RX wall
-    translate([case_small_l, -case_small_w, 0])
-    cube([1, (case_big_w - case_small_w)/2, rf_support_h]);
-     
-    // Add a wall between small and big to block arduino and support RX
-    // Support TX wall left
-    translate([tx_l/2+26+0.5, case_big_w/2 - 2/2, 1/2])
-    {
-      rotate([0, 0, -90])
+    // Support TX/RX wall
+    translate([case_big_l+case_small_l-rf_double_support_l/2, case_big_w/2 - tx_w - sep_rx_tx/2])
+    rf_double_support( h = rf_support_h,
+                      extra_h = support_extra_h,
+                      w = sep_rx_tx,
+                      extra_w = rf_double_extra_support_w,
+                      l = rf_double_support_l);
+
+    // Support tX wall right front
+    translate([case_big_l+case_small_l-4, -case_big_w/2 + 2/2])
+    rf_simple_support(h = rf_support_h,
+                    extra_h = 0,
+                    w = 1,
+                    extra_w = 1,
+                    l = 2);
+                    
+    // Support TX wall right end
+    translate([case_big_l+case_small_l-rx_l, -case_big_w/2 +rx_w/2])
+    union(){
       rf_simple_support(h = rf_support_h,
-                        extra_h = 1,
-                        w = 2,
-                        extra_w = 2,
-                        l = 2);
+                      extra_h = support_extra_h,
+                      w = 2,
+                      extra_w = 2,
+                      l = rx_w);
+      translate([0, rx_w/2, (rf_support_h+support_extra_h)/2])
+      cube([2+2,1,rf_support_h+support_extra_h], center=true);
     }
+
+    // Support RX wall left end
+    translate([case_big_l+case_small_l-tx_l, case_big_w/2 - 2/2])
+    rf_simple_support(h = rf_support_h,
+                    extra_h = support_extra_h,
+                    w = 2,
+                    extra_w = 2,
+                    l = 2);
     
+    // Support RX wall left front
+    translate([case_big_l+case_small_l-4, case_big_w/2 - 2/2])
+    rf_simple_support(h = rf_support_h,
+                    extra_h = 0,
+                    w = 1,
+                    extra_w = 1,
+                    l = 2);
+}
+
+module block_arduino(){
+  translate([0, 0, extra_h/2 +h/2]){
+  rotate([0, 0, 90])
+  difference(){
+     cube([l, w + 2*inner_w, h + extra_h], center=true);
+    
+     translate([0, w/2 + inner_w/2, h/2])
+     cube([l, inner_w + 0.01, extra_h + 0.01], center=true);
+    
+     translate([tx_inner_offset+(l/2-tx_inner_offset+4*inner_w)/2, -inner_w/2 - w/2, h/2])
+     cube([l/2-tx_inner_offset+4*inner_w, inner_w + 0.01, extra_h + 0.01], center=true);
+  }}
 }
 
 module rf_double_support(){
-  translate([0, 0, h/2])
+  translate([0, 0, (h+extra_h)/2])
   difference(){
     cube([l,w+extra_w,h+extra_h], center=true);
     
     translate([0,w/2+extra_w/4,h/2])
     cube([l+0.01,extra_w/2+0.01,extra_h+0.01], center=true);
+    
+    translate([0,-w/2-extra_w/4,h/2])
+    cube([l+0.01,extra_w/2+0.01,extra_h+0.01], center=true);
   }
 }
 
 module rf_simple_support(){
-  translate([0, 0, h/2])
+  translate([0, 0, (h+extra_h)/2])
+  rotate([0, 0, -90])
   difference(){
     cube([l,w+extra_w,h+extra_h], center=true);
     

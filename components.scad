@@ -1,7 +1,5 @@
-module arduino(){
-  h = 1.1;
+module arduino(h = 1.1, l = 42, w = 18){
   l = 42;
-  w = 18;
   
   led_l = 2;
   led_w = 7.5;
@@ -74,22 +72,18 @@ module arduino(){
   cube([power_l, reserved_w, reserved_h], center=true);
 }
 
-module tx(){
-  l = 19;
-  w = 19;
-  h = 1;
-  
+module tx(l = 19, w = 19, t = 1){  
   transmitter_h = 3;
   transmitter_r = 4.5;
   transmitter_offset = [0, 3, transmitter_h/2];
   
   coil1_h = 3;
   coil1_l = 6;
-  coil1_offset = [-3, -5, coil1_h/2 + h/2];
+  coil1_offset = [-3, -5, coil1_h/2 + t/2];
   
   coil2_h = 3;
   coil2_l = 3;
-  coil2_offset = [3, -5, coil1_h/2 + h/2];
+  coil2_offset = [3, -5, coil1_h/2 + t/2];
   
   chip_l = 3;
   chip_w = 1.5;
@@ -97,11 +91,16 @@ module tx(){
   
   antenna_offset = [9, -8.2, 0];
   
-  translate([0, 0, -h/2]){
+  reserved_w = 2;
+  reserved_h = 3;
+  reserved_l = 5;
+  digital_reserved_offset = [-w/2 + reserved_w/2, -l/2 + reserved_l/2 + 5, 0];
+  
+  translate([0, 0, t/2]){
     union()
   
     color("green")
-    cube([l, w, h], center=true);
+    cube([l, w, t], center=true);
     
     translate(transmitter_offset)
     color("grey")
@@ -117,7 +116,7 @@ module tx(){
     rotate([0, 90, -15])
     cylinder(coil2_l, coil2_h/2, coil2_h/2, center=true, $fn = 100);
     
-    translate([3, 2, - chip_h/2 - h/2])
+    translate([3, 2, - chip_h/2 - t/2])
     color("grey")
     cube([chip_l, chip_w, chip_h], center=true);
     
@@ -125,14 +124,14 @@ module tx(){
     rotate([180, 0, 90])
     color("red")
     antenna();
+      
+    translate(digital_reserved_offset)
+    color("white")
+    cube([reserved_w, reserved_l, reserved_h], center=true);
   }
 }
 
-module rx(){
-  l = 30;
-  w = 13;
-  h = 1;
-  
+module rx(l = 30, w = 13, h = 1){  
   coil_h = 3;
   coil_l = 3;
   coil_offset = [-l/2 + 3, -4, coil_h/2 + h/2];
@@ -152,7 +151,12 @@ module rx(){
   
   antenna_offset = [-15, -5.4, 0];
   
-  translate([0, 0, -h/2]){
+  reserved_w = 2;
+  reserved_h = 3;
+  reserved_l = 5;
+  digital_reserved_offset = [l/2 - reserved_l/2 - 4, - w/2 + reserved_w/2, 0];
+  
+  translate([0, 0, h/2]){
     union()
     
     color("green")
@@ -180,6 +184,10 @@ module rx(){
     rotate([0, 0, 90])
     color("red")
     antenna();
+    
+    translate(digital_reserved_offset)
+    color("white")
+    cube([reserved_l, reserved_w, reserved_h], center=true);
   }
 
 }
