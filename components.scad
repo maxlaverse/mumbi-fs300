@@ -1,3 +1,12 @@
+module usb(){
+  usb_t_w = 6.9;
+  usb_b_w = 5.87;
+  usb_t_h = 3.1;
+  usb_mt_h = 1.9;
+  usb_mb_h = 1.3;
+  polygon(points=[[-usb_t_w/2, usb_t_h], [-usb_t_w/2, usb_mt_h], [-usb_b_w/2, usb_mb_h], [-usb_b_w/2, 0], [usb_b_w/2, 0], [usb_b_w/2, usb_mb_h], [usb_t_w/2, usb_mt_h], [usb_t_w/2, usb_t_h]]);
+};
+arduino();
 module arduino(h = 1.1, l = 42, w = 18){
   l = 42;
   
@@ -18,7 +27,7 @@ module arduino(h = 1.1, l = 42, w = 18){
   usb_l = 9;
   usb_w = 7;
   usb_h = 4;
-  usb_offset = [-l/2 + 3, 0, h/2 + usb_h/2];
+  usb_offset = [-l/2 + 3, 0, 1.5 + h/2];
   
   capa_l = 3;
   capa_w = 1.5;
@@ -53,7 +62,14 @@ module arduino(h = 1.1, l = 42, w = 18){
   
   translate(usb_offset)
   color("grey")
-  cube([usb_l, usb_w, usb_h], center=true);
+  union(){
+    translate([-3, 0, -1.1])
+    rotate([90, 0, 90])
+    linear_extrude(2, center=true){
+      usb();
+    }
+    cube([usb_l-4, usb_w, usb_h], center=true);
+  }
   
   translate([-l/2 +2, 5, -t/2 - capa_h/2])
   color("orange")
@@ -89,7 +105,7 @@ module tx(l = 19, w = 19, t = 1){
   chip_w = 1.5;
   chip_h = 1.5;
   
-  antenna_offset = [9, -8.2, 0];
+  antenna_offset = [9, -8.2, 1];
   
   reserved_w = 2;
   reserved_h = 3;
@@ -149,7 +165,7 @@ module rx(l = 30, w = 13, h = 1){
   chip_w = 1.5;
   chip_h = 1.5;
   
-  antenna_offset = [-15, -5.4, 0];
+  antenna_offset = [-15, -5.4, 1];
   
   reserved_w = 2;
   reserved_h = 3;

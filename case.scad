@@ -1,16 +1,16 @@
 use <components.scad>
 
 main(
-  arduino_l = 42,
+  arduino_l = 42.5,
   arduino_w = 18,
   arduino_t = 1.1,
   
-  tx_l = 19,
-  tx_w = 19,
+  tx_l = 19+0.5,
+  tx_w = 19+0.5,
   tx_antenna_offset_x = 0.5,
   
-  rx_l = 30,
-  rx_w = 13,
+  rx_l = 30+1,
+  rx_w = 13+0.75,
   rx_antenna_offset_x = 0.5,
   
   antenna_hole_l = 1.5,
@@ -18,12 +18,12 @@ main(
   usb_l = 7.8,
   usb_h = 4,
   usb_d = 1.5,
-  usb_offset_z = 4.5,
+  usb_offset_z = 3.2,
 
 
-  case_h = 11,
+  case_h = 11-2.5,
   case_t = 1.5,
-  sep_rx_tx = 14,
+  sep_arduino_rx = 0.5,
   sep_arduino_tx = 1,
 
   support_h = 2,
@@ -45,6 +45,7 @@ main(
 );
 
 module main(){
+  sep_rx_tx = sep_arduino_rx + rx_w;
   case_big_w = tx_w + rx_w + sep_rx_tx;
   case_small_w = arduino_w;
   case_l = arduino_l + tx_l + sep_arduino_tx;
@@ -62,17 +63,26 @@ module main(){
           t = case_t,
           h = case_h);
       
+      translate([20, 0, -1])
+      cube([38,15,3], center=true);
+
+      translate([37, 0, -1])
+      cube([6,45,3], center=true);
+
+      translate([53, 0, -1])
+      cube([13,45,3], center=true);
+
       // Antennas
-      antenna_offset_z = case_h/2 + case_t/2 - 0.5;
-      antenna_size = [case_t + 0.02, antenna_hole_l, case_h - support_h - case_t + 0.01];
+      antenna_offset_z = case_h/2 + case_t/2 + 0.25;
+      antenna_size = [case_t + 0.02, antenna_hole_l, case_h - support_h - case_t -1.5 + 0.01];
       
       // RX antenna
       translate([case_l + case_t/2, case_big_w/2 - tx_w+antenna_hole_l/2 + tx_antenna_offset_x, antenna_offset_z])
-      cube(antenna_size, center=true);
-      
+      antenna_hole(antenna_size);
+
       // TX antenna
       translate([case_l + case_t/2, -case_big_w/2 + rx_w - antenna_hole_l/2 - rx_antenna_offset_x, antenna_offset_z])
-      cube(antenna_size, center=true);
+      antenna_hole(antenna_size);
       
       // Screw hole
       translate([(arduino_l + case_l)/2, 0, 0])
@@ -80,17 +90,21 @@ module main(){
 
       // Hole for head of screw
       translate([(arduino_l + case_l)/2, 0, -1])
-      cylinder(1.01, 2, 2, $fn=100, center=true);     
+      cylinder(1.01, 4, 3, $fn=100, center=true);
      
       // USB
-      translate([-case_t/2, 0, usb_d/2 + usb_offset_z])
-      cube([usb_d+0.01, usb_l+0.01, usb_h+0.01], center=true);      
+      translate([-case_t-0.01, 0, usb_offset_z])
+      rotate([90, 0, 90])
+      scale(1.3)
+      linear_extrude(case_t + 0.02){
+        usb();
+      }
     }
     
     // Support vis
     translate([(arduino_l + case_l)/2, 0, 1])
-    difference(){
-    cube([6, 6, 2], center=true);
+    *difference(){
+    cube([10, 10, 2], center=true);
     cylinder(2+0.02,1,1, $fn=100, center=true);}
     
     // Support Arduino left front
@@ -100,16 +114,16 @@ module main(){
     // Support Arduino right front
     translate([arduino_support_front_l/2, -arduino_w/2+arduino_support_front_w/2, support_h/2])
     cube([arduino_support_front_l, arduino_support_front_w, support_h], center=true);   
-      
+
     // Support Arduino middle left
-    support_middle_offset = 2;
+    support_middle_offset = 5;
     translate([case_small_l-arduino_support_middle_l/2 - support_middle_offset, arduino_w/2-arduino_support_front_w/2, support_h/2])
     cube([arduino_support_middle_l, arduino_support_middle_w, support_h], center=true);   
 
     // Support Arduino middle right
     translate([case_small_l-arduino_support_middle_l/2 - support_middle_offset, -arduino_w/2+arduino_support_front_w/2, support_h/2])
     cube([arduino_support_middle_l, arduino_support_middle_w, support_h], center=true);   
-            
+
     // Block Arduino + RX/TX
     translate([arduino_l + sep_arduino_tx/2, 0, 0])
     block_arduino(
@@ -120,19 +134,6 @@ module main(){
       inner_w = 1,
       tx_inner_offset = 3);
   
-    // Arduino
-    translate([arduino_l/2, 0, support_h+ arduino_t/2])
-    arduino(l = arduino_l, w = arduino_w, t = arduino_t);
-
-    // RX
-    translate([case_big_l+case_small_l-rx_l/2, -case_big_w/2 + rx_w/2, support_h])
-    rotate([0, 0, 180])
-    rx(l = rx_l, w = rx_w, t = 1);
-
-    // TX
-    translate([case_big_l+case_small_l-tx_l/2, case_big_w/2 - tx_w/2, support_h])
-    tx(l = tx_l, w = tx_w, t = 1);
-     
     // Support TX/RX wall
     translate([case_big_l+case_small_l-rf_double_support_l/2-0.5, case_big_w/2 - tx_w - sep_rx_tx/2])
     difference(){
@@ -154,16 +155,16 @@ module main(){
                     l = 2);
                     
     // Support TX wall right end
-    tx_w_s_w2 = 2;
-    translate([case_big_l+case_small_l-rx_l-rx_support_extra_w/2+tx_w_s_w2/2, -case_big_w/2 +rx_w/2])
+    inner_su = 2;
+    translate([case_big_l+case_small_l-rx_l-rx_support_extra_w/2+inner_su/2, -case_big_w/2 +rx_w/2])
     union(){
       rf_simple_support(h = support_h,
                         extra_h = support_extra_h,
                         w = rx_support_extra_w,
-                        extra_w = tx_w_s_w2,
+                        extra_w = inner_su,
                         l = rx_w);
       translate([0, rx_w/2+1/2, (support_h+support_extra_h)/2])
-      cube([rx_support_extra_w+tx_w_s_w2,1,support_h+support_extra_h], center=true);
+      cube([rx_support_extra_w+inner_su,1,support_h+support_extra_h], center=true);
     }
 
     // Support RX wall left end
@@ -182,6 +183,19 @@ module main(){
                     w = 1,
                     extra_w = 1,
                     l = 2);
+
+     // Arduino
+    translate([arduino_l/2, 0, support_h+ arduino_t/2])
+    *arduino(l = arduino_l, w = arduino_w, t = arduino_t);
+
+    // RX
+    translate([case_big_l+case_small_l-rx_l/2, -case_big_w/2 + rx_w/2, support_h])
+    rotate([0, 0, 180])
+    *rx(l = rx_l, w = rx_w, t = 1);
+
+    // TX
+    translate([case_big_l+case_small_l-tx_l/2, case_big_w/2 - tx_w/2, support_h])
+    *tx(l = tx_l, w = tx_w, t = 1);
 }
 
 module block_arduino(){
@@ -290,6 +304,15 @@ module plaque3(){
     translate([-r/2 + l_b + l_s, -w_b/2 + r/2])
     rotate([0, 0, 270])
     angle2(r=r);
+  }
+}
+
+module antenna_hole(antenna_size){
+  hull(){
+    cube(antenna_size, center=true);
+      translate([0, 0, -antenna_size[2]/2])
+    rotate([0, 90, 0])
+    cylinder(antenna_size[0], antenna_size[1]/2, antenna_size[1]/2, $fn=100, center=true);
   }
 }
 
