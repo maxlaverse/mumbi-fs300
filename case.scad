@@ -9,8 +9,8 @@ main(
   tx_w = 19+0.5,
   tx_antenna_offset_x = 0.5,
   
-  rx_l = 30+1,
-  rx_w = 13+0.75,
+  rx_l = 30+1-0.5,
+  rx_w = 13+0.75+0.5,
   rx_antenna_offset_x = 0.5,
   
   antenna_hole_l = 1.5,
@@ -21,7 +21,7 @@ main(
   usb_offset_z = 3.2,
 
 
-  case_h = 11-2.5,
+  case_h = 11,
   case_t = 1.5,
   sep_arduino_rx = 0.5,
   sep_arduino_tx = 1,
@@ -71,6 +71,9 @@ module main(){
 
       translate([53, 0, -1])
       cube([13,45,3], center=true);
+      
+      translate([53, 0, case_h - 3])
+      cube([95,60,5], center=true);
 
       // Antennas
       antenna_offset_z = case_h/2 + case_t/2 + 0.25;
@@ -108,11 +111,11 @@ module main(){
     cylinder(2+0.02,1,1, $fn=100, center=true);}
     
     // Support Arduino left front
-    translate([arduino_support_front_l/2, arduino_w/2-arduino_support_front_w/2, support_h/2])
+    translate([arduino_support_front_l/2+8, arduino_w/2-arduino_support_front_w/2, support_h/2])
     cube([arduino_support_front_l, arduino_support_front_w, support_h], center=true);
 
     // Support Arduino right front
-    translate([arduino_support_front_l/2, -arduino_w/2+arduino_support_front_w/2, support_h/2])
+    translate([arduino_support_front_l/2+8, -arduino_w/2+arduino_support_front_w/2, support_h/2])
     cube([arduino_support_front_l, arduino_support_front_w, support_h], center=true);   
 
     // Support Arduino middle left
