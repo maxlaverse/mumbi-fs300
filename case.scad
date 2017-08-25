@@ -1,16 +1,16 @@
 use <components.scad>
 
 main(
-  arduino_l = 42.5,
+  arduino_l = 42.5+0.5,
   arduino_w = 18,
   arduino_t = 1.1,
   
-  tx_l = 19+0.5,
-  tx_w = 19+0.5,
+  tx_l = 19+0.5-0.25,
+  tx_w = 19+0.5-0.25,
   tx_antenna_offset_x = 0.5,
   
   rx_l = 30+1-0.5,
-  rx_w = 13+0.75+0.5,
+  rx_w = 13+0.75+0.5-0.25,
   rx_antenna_offset_x = 0.5,
   
   antenna_hole_l = 1.5,
@@ -18,10 +18,10 @@ main(
   usb_l = 7.8,
   usb_h = 4,
   usb_d = 1.5,
-  usb_offset_z = 3.2,
+  usb_offset_z = 3.2+0.5,
 
 
-  case_h = 11,
+  case_h = 13,
   case_t = 1.5,
   sep_arduino_rx = 0.5,
   sep_arduino_tx = 1,
@@ -51,6 +51,14 @@ module main(){
   case_l = arduino_l + tx_l + sep_arduino_tx;
   case_big_l = rx_l + rx_support_extra_w;
   case_small_l = case_l - case_big_l;
+ 
+  // Cover
+  !cover(l_b = case_big_l,
+      l_s = case_small_l,
+      w_s = case_small_w,
+      w_b = case_big_w,
+      t = case_t,
+      h = case_h);
   
   union()
   
@@ -64,16 +72,16 @@ module main(){
           h = case_h);
       
       translate([20, 0, -1])
-      cube([38,15,3], center=true);
+      *cube([38,15,3], center=true);
 
       translate([37, 0, -1])
-      cube([6,45,3], center=true);
+      *cube([6,45,3], center=true);
 
       translate([53, 0, -1])
-      cube([13,45,3], center=true);
+      *cube([13,45,3], center=true);
       
       translate([53, 0, case_h - 3])
-      cube([95,60,5], center=true);
+      *cube([95,60,5], center=true);
 
       // Antennas
       antenna_offset_z = case_h/2 + case_t/2 + 0.25;
@@ -106,8 +114,8 @@ module main(){
     
     // Support vis
     translate([(arduino_l + case_l)/2, 0, 1])
-    *difference(){
-    cube([10, 10, 2], center=true);
+    difference(){
+    cube([9,9, 2], center=true);
     cylinder(2+0.02,1,1, $fn=100, center=true);}
     
     // Support Arduino left front
@@ -135,7 +143,7 @@ module main(){
       h = support_h,
       extra_h = support_extra_h,
       inner_w = 1,
-      tx_inner_offset = 3);
+      tx_inner_offset = 3.5); //Parametrise
   
     // Support TX/RX wall
     translate([case_big_l+case_small_l-rf_double_support_l/2-0.5, case_big_w/2 - tx_w - sep_rx_tx/2])
@@ -277,6 +285,39 @@ module box(){
       w_b = w_b,
       r = 0
     );
+  }
+}
+
+module cover(){
+  r = 2;
+  translate([-t, 0, -t])
+  union(){
+    linear_extrude(1)
+    plaque3(l_b = l_b + 2*t,
+      l_s = l_s,
+      w_s = w_s + 2*t,
+      w_b = w_b + 2*t,
+      r = r
+    );
+    
+    translate([t, 0, t/2])
+    linear_extrude(2)
+    difference()
+    {
+      plaque3(l_b = l_b,
+        l_s = l_s,
+        w_s = w_s,
+        w_b = w_b,
+        r = 0
+      );
+      translate([t/2, 0, 0])
+      plaque3(l_b = l_b-t,
+        l_s = l_s,
+        w_s = w_s-t,
+        w_b = w_b-t,
+        r = 0
+      );
+    }
   }
 }
 
