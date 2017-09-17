@@ -1,16 +1,16 @@
 use <components.scad>
 
 main(
-  arduino_l = 42.5+0.5,
+  arduino_l = 43,
   arduino_w = 18,
   arduino_t = 1.1,
   
-  tx_l = 19+0.5-0.25,
-  tx_w = 19+0.5-0.25,
+  tx_l = 19.25,
+  tx_w = 19.25,
   tx_antenna_offset_x = 0.5,
   
-  rx_l = 30+1-0.5,
-  rx_w = 13+0.75+0.5-0.25,
+  rx_l = 30.5,
+  rx_w = 14,
   rx_antenna_offset_x = 0.5,
   
   antenna_hole_l = 1.5,
@@ -18,11 +18,12 @@ main(
   usb_l = 7.8,
   usb_h = 4,
   usb_d = 1.5,
-  usb_offset_z = 3.2+0.5,
+  usb_offset_z = 3.7,
 
 
-  case_h = 13,
+  case_h = 12,
   case_t = 1.5,
+  case_extra_middle = 3,
   sep_arduino_rx = 0.5,
   sep_arduino_tx = 1,
 
@@ -49,11 +50,11 @@ module main(){
   case_big_w = tx_w + rx_w + sep_rx_tx;
   case_small_w = arduino_w;
   case_l = arduino_l + tx_l + sep_arduino_tx;
-  case_big_l = rx_l + rx_support_extra_w;
+  case_big_l = rx_l + rx_support_extra_w + case_extra_middle;
   case_small_l = case_l - case_big_l;
  
   // Cover
-  !cover(l_b = case_big_l,
+  *cover(l_b = case_big_l,
       l_s = case_small_l,
       w_s = case_small_w,
       w_b = case_big_w,
