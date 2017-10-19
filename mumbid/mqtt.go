@@ -77,6 +77,7 @@ func (h *MqttHandler) Run() error {
 				QoS:       mqtt.QoS0,
 				TopicName: []byte(c.Topic),
 				Message:   []byte(c.Message),
+				Retain:    true,
 			})
 			if err != nil {
 				fmt.Printf("An error has happened during the publication: %v\n", err)
